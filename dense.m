@@ -113,10 +113,14 @@ classdef dense < handle
       ## X debe tener sus datos en las filas
       assert(columns(X) == rows(self.W));
 
-      self.inputsX=X;
-      self.outputs = X*self.W; %% X matriz de diseño, asuma datos en filas
-      y=self.outputs;
+      %self.inputsX=X;
+      self.inputsX=[ones(rows(X),1) X];
+      self.W=[ones(1,columns(self.W));self.W]
       %aqui se hace la logica del sesgo
+
+      self.outputs = X*self.W; %% X matriz de diseño, asuma datos en filas
+
+      y=self.outputs;
       # limpie el gradiente en el paso hacia adelante
       self.gradientX = [];
       self.gradientW = [];
