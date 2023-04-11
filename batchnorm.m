@@ -43,9 +43,7 @@ classdef batchnorm < handle
     ##
     ## beta es factor del filtro utilizado para aprender
     ## epsilon es el valor usado para evitar divisiones por cero
-    function self=dense(units)
 
-    endfunction
     function self=batchnorm(beta=0.9,epsilon=1e-10)
       self.beta=beta;
       self.epsilon=epsilon;
