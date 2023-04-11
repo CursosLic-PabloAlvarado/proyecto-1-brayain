@@ -9,10 +9,10 @@
 ##
 ## Este código es un ejemplo de implementación de una capa, con todos los métodos
 ## e interfaces que deben respetarse.
-classdef layer_template < handle
+classdef lelelu < handle
 
   ## En GNU/Octave "< handle" indica que la clase se deriva de handle
-  ## lo que evita que cada vez que se llame un método se cree un 
+  ## lo que evita que cada vez que se llame un método se cree un
   ## objeto nuevo.  Es decir, en esta clase forward y backward alternan
   ## la instancia actual y no una copia, como sería el caso si no
   ## se usara "handle".
@@ -26,7 +26,7 @@ classdef layer_template < handle
 
   methods
     ## Constructor inicializa todo vacío
-    function self=layer_template(units)
+    function self=lelelu(units)
       if (nargin > 0)
         self.units=units;
       else
@@ -43,7 +43,7 @@ classdef layer_template < handle
     function outSize=init(self,inputSize)
       outSize=inputSize;
     endfunction
-   
+
     ## Retorna true si la capa tiene un estado que adaptar (como pesos).
     ##
     ## En ese caso, es necesario tener las funciones stateGradient(),
@@ -51,52 +51,52 @@ classdef layer_template < handle
     function st=hasState(self)
       st=false;
     endfunction
-   
-   
-    ## Si hasState() retorna false, las siguientes tres funciones 
+
+
+    ## Si hasState() retorna false, las siguientes tres funciones
     ## pueden borrarse:
-    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv 
-  
+    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
     ## Retorne el gradiente del estado, que existe solo si esta capa tiene
     ## algún estado que debe ser aprendido
     ##
     ## Este gradiente es utilizado por el modelo para actualizar el estado
-    ## 
+    ##
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function g=stateGradient(self)
       g=[];
     endfunction
-    
+
     ## Retorne el estado aprendido
-    ## 
+    ##
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function st=state(self)
       st=[];
     endfunction
-    
+
     ## Reescriba el estado aprendido
     ##
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.    
+    ## returna false, entonces puede eliminarse este método.
     function setState(self,W)
     endfunction
 
     ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 
 
- 
+
+
     ## Propagación hacia adelante realiza W*x
     ## X puede ser un vector columna o una matriz.
     ##
     ## Si X es un vector columna es interpretado como un dato.  Si X
     ## es una matriz, se asume que es una matriz de diseño convencional,
-    ## con cada dato en una fila.  
+    ## con cada dato en una fila.
     ##
     ## El parámetro 'prediction' permite determinar si este método
     ## está siendo llamado en el proceso de entrenamiento (false) o en el
-    ## proceso de predicción (true)      
+    ## proceso de predicción (true)
     function y=forward(self,X,prediction=false)
       y=X;
     endfunction
@@ -104,7 +104,7 @@ classdef layer_template < handle
     ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
-    function g=backward(self,dJds)      
+    function g=backward(self,dJds)
       g=dJds;
     endfunction
   endmethods

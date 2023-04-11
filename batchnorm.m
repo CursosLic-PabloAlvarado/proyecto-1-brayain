@@ -110,7 +110,7 @@ classdef batchnorm < handle
 
       if (prediction)
 
-        ## TODO: Qué hacer en la predicción?
+        ## TODO: Qué hacer en la predicción? %se usa todos los pasos
         %y=X; ## BORRAR esta línea cuando tenga la verdadera solución
         [m, n] = size(X);
         mu = zeros(1, n);
@@ -137,7 +137,7 @@ classdef batchnorm < handle
           ## Imposible normalizar un solo dato.  Devuélvalo tal y como es
           y=X;
         else
-          ## TODO: Qué hacer en el entrenamiento?
+          ## TODO: Qué hacer en el entrenamiento?% utilizar solamente minilote
           y=X; ## BORRAR esta línea cuando tenga la verdadera solución
 ##############################################################################
         endif
@@ -150,6 +150,7 @@ classdef batchnorm < handle
     function g=backward(self,dJds)
       g=dJds; ## TODO: CORREGIR, pues esto no es el verdadero gradiente
       %regla de la cadena ej
+
       dJ_ds = sum(dL_dout .* (X_n - mu), 1) ./ (m .* sigma);
       dL_dmu = sum(-dL_dout ./ sigma, 1) - 2 .* sum((X_n - mu) .* dL_dsig, 1) ./ m;
       dL_dX = dL_dout ./ sigma + dL_ds .* (1 ./ m + 2 .* (X_norm - mu) ./ m);
