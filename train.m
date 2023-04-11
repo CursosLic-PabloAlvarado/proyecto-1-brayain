@@ -55,22 +55,22 @@ if (reuseNetwork && exist(file,"file")==2)
   ann.load(file);
 else
   ann.add({input_layer(2),
-           dense_unbiased(16),
-           sigmoide(),
-           dense_unbiased(16),
-           sigmoide(),
-           dense_unbiased(numClasses),
-           sigmoide()});
-  
+           dense(16),
+           sigmoid(),
+           dense(16),
+           sigmoid(),
+           dense(numClasses),
+           sigmoid()});
+
   #ann.add(input_layer(2));
-  #ann.add(dense_unbiased(16));
-  #ann.add(sigmoide());
-  #ann.add(dense_unbiased(16));
-  #ann.add(sigmoide());
-  #ann.add(dense_unbiased(numClasses));
-  #ann.add(sigmoide());
-  
-  
+  #ann.add(dense(16));
+  #ann.add(sigmoid());
+  #ann.add(dense(16));
+  #ann.add(sigmoid());
+  #ann.add(dense(numClasses));
+  #ann.add(sigmoid());
+
+
   ann.add(olsloss());
 endif
 
