@@ -10,15 +10,17 @@ classdef batchnorm < handle
   properties
     ## TODO: Agregue las propiedades que requiera.  No olvide inicializarlas
     ##       en el constructor o el método init si hace falta.
+    alpha % scaling parameter
+    moving_mean % moving average of the mean
+    moving_var % moving average of the variance
+    momentum % momentum parameter for moving averages
+    inputsX=[]; ## Entrada de valores en la propagación hacia adelante
+    x_norm=[]; % normalized input data
+    mean % batch mean
+    var % batch variance
 
     ## Número de unidades (neuronas) en la capa
     units=0;
-
-    ## Pesos de la capa densa sin sesgo
-    W=[];
-
-    ## Entrada de valores en la propagación hacia adelante
-    inputsX=[];
 
     ## Resultados después de la propagación hacia adelante
     outputs=[];
@@ -44,27 +46,16 @@ classdef batchnorm < handle
     ## beta es factor del filtro utilizado para aprender
     ## epsilon es el valor usado para evitar divisiones por cero
 
-    function self=batchnorm(beta=0.9,epsilon=1e-10)
+    function self=batchnorm(beta=0.9,epsilon=1e-10,alpha,momentum)
       self.beta=beta;
       self.epsilon=epsilon;
 
       ## TODO:
 
-      if (nargin > 0)
-        self.units=units;
-      else
-        self.units=0;
-      endif
-
-      self.mu=[];
-      self.sigma=[];
-
-      self.inputsX=[];
-      self.W=[];
-      self.outputs=[];
-
-      self.gradientX=[];
-      self.gradientW=[];
+      self.alpha = alpha;
+      self.momentum = momentum;
+      self.moving_mean = 0;%ruido
+      self.moving_var = 0;
 
     endfunction
 
@@ -77,13 +68,8 @@ classdef batchnorm < handle
 
       ## TODO:
 
-      ## Dimensiones de la matriz de pesos para calcular Y=XW
-      cols = self.units;
-      rows = inputSize;
-      ## LeCun Normal (para selu)
-      self.W=normrnd(0,1/sqrt(cols),rows,cols);
     endfunction
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## La capa de normalización no tiene estado que se aprenda con
     ## la optimización.
     function st=hasState(self)
@@ -96,51 +82,41 @@ classdef batchnorm < handle
     ## El parámetro 'prediction' permite determinar si este método
     ## está siendo llamado en el proceso de entrenamiento (false) o en el
     ## proceso de predicción (true)
-    function [mu, sigma] = media_desvi(X)
-        mu = mean(X, 1);
-        sigma = std(X, 1);
-    endfunction
-
-    function X_n = normalizar(X, mu, sigma)
-        X_n = (X - mu) ./ sigma;
-    endfunction
-
 
     function y=forward(self,X,prediction=false)
-
+      self.inputsX = inputsX;
+      m = size(inputsX,1);
+      n = size(inputsX,2);
       if (prediction)
 
         ## TODO: Qué hacer en la predicción? %se usa todos los pasos
-        %y=X; ## BORRAR esta línea cuando tenga la verdadera solución
-        [m, n] = size(X);
-        mu = zeros(1, n);
-        sigma = zeros(1, n);
+        self.mean = mean(inputsX);
+        self.var = var(inputsX)*(m-1)/m;
+        self.x_norm = (inputsX-self.mean)./sqrt(self.var+self.epsilon);
+        out = self.alpha.*self.x_norm + self.beta;
+        % update moving averages of mean and variance
+        self.moving_mean = self.momentum*self.moving_mean + (1-self.momentum)*self.mean;
+        self.moving_var = self.momentum*self.moving_var + (1-self.momentum)*self.var;
 
-        %Media y desviación estándar de cada característica en un lote de datos
-        for i = 1:m
-            [batch_mu, batch_sigma] = media_desvi(X(i,:));
-            mu = mu + batch_mu;
-            sigma = sigma + batch_sigma .^ 2;
-        endfor
-
-        mu = mu ./ m; %media total
-        sigma = sqrt(sigma ./ m + epsilon);%desviacion total
-
-        % Normalización
-        X_n = zeros(size(X));
-        for i = 1:m
-            X_n(i,:) = normalizar(X(i,:), mu, sigma);
-        endfor
-        y=X_n %respuesta
+        y=out; %respuesta
       else
         if (rows(X)==1)
           ## Imposible normalizar un solo dato.  Devuélvalo tal y como es
           y=X;
         else
           ## TODO: Qué hacer en el entrenamiento?% utilizar solamente minilote
-          y=X; ## BORRAR esta línea cuando tenga la verdadera solución
+
+          self.x_norm = (inputsX-self.moving_mean)./sqrt(self.moving_var+self.epsilon);
+          out = self.alpha.*self.x_norm + self.beta;
+          y=out;
 ##############################################################################
         endif
+        cache.x_norm = self.x_norm;
+        cache.alpha = self.alpha;
+        cache.var = self.var;
+        cache.mean = self.mean;
+        cache.inputsX = inputsX;
+        cache.epsilon = self.epsilon;
       endif
     endfunction
 
@@ -148,16 +124,18 @@ classdef batchnorm < handle
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
     function g=backward(self,dJds)
-      g=dJds; ## TODO: CORREGIR, pues esto no es el verdadero gradiente
-      %regla de la cadena ej
-
-      dJ_ds = sum(dL_dout .* (X_n - mu), 1) ./ (m .* sigma);
-      dL_dmu = sum(-dL_dout ./ sigma, 1) - 2 .* sum((X_n - mu) .* dL_dsig, 1) ./ m;
-      dL_dX = dL_dout ./ sigma + dL_ds .* (1 ./ m + 2 .* (X_norm - mu) ./ m);
-      dL_dgamma = sum(dL_dout .* X_norm, 1);
-      dL_dbeta = sum(dL_dout, 1);
 
 
+      dx_norm = dout.*cache.alpha;
+      x_mu = cache.inputsX - cache.mean;
+      var_sqrt_inv = 1./sqrt(cache.var + cache.epsilon);
+      dvar = sum(dx_norm.*x_mu.*(-0.5).*var_sqrt_inv.^3, 1);
+      dmu = sum(dx_norm.*-var_sqrt_inv, 1) + dvar.*mean(-2.*x_mu, 1);
+      dx = dx_norm.*var_sqrt_inv + dvar.*(2./size(self.inputs	,1).*x_mu) + dmu./size(self.inputs	,1);
+      self.alpha = sum(dout.*cache.x_norm, 1);
+      self.beta = sum(dout, 1);
+
+      g=dx;
 
     endfunction
   endmethods
