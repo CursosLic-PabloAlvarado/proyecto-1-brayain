@@ -111,18 +111,18 @@ classdef dense < handle
     ## Propagación hacia adelante realiza Y=XW
     function y=forward(self,X,prediction=false)
       ## X debe tener sus datos en las filas
-      assert(columns(X) == rows(self.W));
+      assert(columns(X) == rows(self.W)-1);
 
-      self.inputsX=X;
-      self.W=[ones(rows(W),1) W];
+      self.inputsX=[ones(rows(X),1) X];
+      self.W=W;
       %aqui se hace la logica del sesgo
 
-      self.outputs = X*self.W; %% X matriz de diseño, asuma datos en filas
+      self.outputs = self.inputsX*self.W; %% X matriz de diseño, asuma datos en filas
 
       y=self.outputs;
       # limpie el gradiente en el paso hacia adelante
-      self.gradientX = [];
-      self.gradientW = [];
+      self.gradientX = [];%tomar en cuenta el gradiente, en X la fila de 1 no se considera
+      self.gradientW = [];%en W no está esa fila de 1s extra
     endfunction
 
     ## Propagación hacia atrás recibe dJ/ds de siguientes nodos del grafo,
@@ -133,9 +133,11 @@ classdef dense < handle
       assert(columns(dJds)==columns(self.W));
       assert(rows(self.inputsX)==rows(dJds));
 
-      self.gradientW = self.inputsX'*dJds;
-      self.gradientX = dJds*self.W';
+      self.gradientW = self.inputsX'*dJds(:, 2:end);%Como dW tiene mas col, se quita la primera
+      %para que quede de la misma dimensión que W
 
+      self.gradientX = dJds*self.W';
+      %self.gradientX = [ones(rows(X),1) dJds*self.W'];
       g=self.gradientX;
     endfunction
   endmethods

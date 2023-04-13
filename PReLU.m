@@ -9,10 +9,10 @@
 ##
 ## Este código es un ejemplo de implementación de una capa, con todos los métodos
 ## e interfaces que deben respetarse.
-classdef layer_template < handle
+classdef lelelu < handle
 
   ## En GNU/Octave "< handle" indica que la clase se deriva de handle
-  ## lo que evita que cada vez que se llame un método se cree un 
+  ## lo que evita que cada vez que se llame un método se cree un
   ## objeto nuevo.  Es decir, en esta clase forward y backward alternan
   ## la instancia actual y no una copia, como sería el caso si no
   ## se usara "handle".
@@ -21,19 +21,30 @@ classdef layer_template < handle
     ## Ejemplo Número de unidades (neuronas) en la capa
     ## (solo un ejemplo, puede borrarse)
     units=0;
+    alpha = 0.01,   ##hiperparametro de PReLU
+
+    dEdW = [];      ##gradiente de la capa
+    W = [];         ##parametros de la capa
 
   endproperties
 
   methods
     ## Constructor inicializa todo vacío
-    function self=layer_template(units)
+    function self=prelu(units)
       if (nargin > 0)
         self.units=units;
       else
         self.units=0;
       endif
 
+      if (nargin > 1)
+        self.alpha = alpha;
+      else
+        self.alpha = 0.01;
+      endif
+
       ## TODO: Inicialice sus propiedades aquí
+      self.W = ones(self.units, 1)*self.alpha;    ##inicializacion de parametros de la capa
     endfunction
 
     ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
@@ -43,69 +54,74 @@ classdef layer_template < handle
     function outSize=init(self,inputSize)
       outSize=inputSize;
     endfunction
-   
+
     ## Retorna true si la capa tiene un estado que adaptar (como pesos).
     ##
     ## En ese caso, es necesario tener las funciones stateGradient(),
     ## state() y setState()
     function st=hasState(self)
-      st=false;
+      st=true;
     endfunction
-   
-   
-    ## Si hasState() retorna false, las siguientes tres funciones 
+
+
+    ## Si hasState() retorna false, las siguientes tres funciones
     ## pueden borrarse:
-    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv 
-  
+    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
     ## Retorne el gradiente del estado, que existe solo si esta capa tiene
     ## algún estado que debe ser aprendido
     ##
     ## Este gradiente es utilizado por el modelo para actualizar el estado
-    ## 
+    ##
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function g=stateGradient(self)
-      g=[];
+      g=self.dEdW;
     endfunction
-    
+
     ## Retorne el estado aprendido
-    ## 
+    ##
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function st=state(self)
-      st=[];
+      st=self.W;
     endfunction
-    
+
     ## Reescriba el estado aprendido
     ##
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.    
+    ## returna false, entonces puede eliminarse este método.
     function setState(self,W)
+      self.W=W;
     endfunction
 
     ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 
 
- 
+
+
     ## Propagación hacia adelante realiza W*x
     ## X puede ser un vector columna o una matriz.
     ##
     ## Si X es un vector columna es interpretado como un dato.  Si X
     ## es una matriz, se asume que es una matriz de diseño convencional,
-    ## con cada dato en una fila.  
+    ## con cada dato en una fila.
     ##
     ## El parámetro 'prediction' permite determinar si este método
     ## está siendo llamado en el proceso de entrenamiento (false) o en el
-    ## proceso de predicción (true)      
+    ## proceso de predicción (true)
     function y=forward(self,X,prediction=false)
-      y=X;
+      y = max(0, X) + self.W * min(0, X);
     endfunction
 
     ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
-    function g=backward(self,dJds)      
-      g=dJds;
+    function g=backward(self,dJds)
+      pos_mask = dJds > 0;
+      neg_mask = dJds <= 0;
+      g = dJds;
+      g(neg_mask) = g(neg_mask) * self.W(neg_mask);
+      self.dEdW = sum(sum(dJds(neg_mask) .* (-X(neg_mask))));
     endfunction
   endmethods
 endclassdef
