@@ -55,7 +55,6 @@ classdef lelelu < handle
 
     ## Si hasState() retorna false, las siguientes tres funciones
     ## pueden borrarse:
-    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     ## Retorne el gradiente del estado, que existe solo si esta capa tiene
     ## algún estado que debe ser aprendido
