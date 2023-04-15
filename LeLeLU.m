@@ -20,7 +20,10 @@ classdef lelelu < handle
   properties
     ## Ejemplo Número de unidades (neuronas) en la capa
     ## (solo un ejemplo, puede borrarse)
-    units=0;
+    units = 0;
+    W = []; ## matriz de pesos
+    b = []; ## vector de bias
+    a = 0.1; ## alpha para la Leaky ReLU
 
   endproperties
 
@@ -34,6 +37,9 @@ classdef lelelu < handle
       endif
 
       ## TODO: Inicialice sus propiedades aquí
+      ## Inicializar pesos y bias aleatoriamente
+      self.W = randn(self.units, inputSize) * 0.01;
+      self.b = zeros(self.units, 1);
     endfunction
 
     ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
@@ -41,7 +47,9 @@ classdef lelelu < handle
     ## La función devuelve la dimensión de la salida de la capa y recibe
     ## la dimensión de los datos a la entrada de la capa
     function outSize=init(self,inputSize)
-      outSize=inputSize;
+      self.W = randn(self.units, inputSize) * 0.01;
+      self.b = zeros(self.units, 1);
+      outSize = self.units;
     endfunction
 
     ## Retorna true si la capa tiene un estado que adaptar (como pesos).
@@ -49,7 +57,7 @@ classdef lelelu < handle
     ## En ese caso, es necesario tener las funciones stateGradient(),
     ## state() y setState()
     function st=hasState(self)
-      st=false;
+      st=true;
     endfunction
 
 
@@ -64,7 +72,7 @@ classdef lelelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function g=stateGradient(self)
-      g=[];
+      g = [self.W(:); self.b(:)];
     endfunction
 
     ## Retorne el estado aprendido
@@ -72,7 +80,7 @@ classdef lelelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function st=state(self)
-      st=[];
+      s = [self.W(:); self.b(:)];
     endfunction
 
     ## Reescriba el estado aprendido
@@ -80,6 +88,11 @@ classdef lelelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function setState(self,W)
+      W_size = self.units * size(state, 1) / (size(state, 1) + 1);
+      b_size = self.units - W_size;
+
+      self.W = reshape(state(1:W_size), self.units, []);
+      self.b = reshape(state(W_size+1:end), b_size, []);
     endfunction
 
     ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,14 +110,27 @@ classdef lelelu < handle
     ## está siendo llamado en el proceso de entrenamiento (false) o en el
     ## proceso de predicción (true)
     function y=forward(self,X,prediction=false)
-      y=X;
+      z = self.W * X + self.b;
+      y = max(self.a * z, z);
     endfunction
 
     ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
     function g=backward(self,dJds)
-      g=dJds;
+      dJdz = dJdy .* (self.W >= 0) + self.a * dJdy .* (self.W < 0);
+      g = {dJdz, self.W * dJdz};
+    endfunction
+
+    function [dJdW, dJdb] = backwardState(self, dJds)
+      dJdW = dJds{1} * self.W';
+      dJdb = sum(dJds{1})';
+    endfunction
+
+    function [dJdX, dJdW, dJdb] = backwardParams(self, X, dJds)
+      dJdX = dJds{2} * self.W;
+      dJdW = X' * dJds{2};
+      dJdb = sum(dJds{2})';
     endfunction
   endmethods
 endclassdef
