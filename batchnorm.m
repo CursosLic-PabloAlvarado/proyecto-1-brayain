@@ -10,14 +10,14 @@ classdef batchnorm < handle
   properties
     ## TODO: Agregue las propiedades que requiera.  No olvide inicializarlas
     ##       en el constructor o el método init si hace falta.
-    alpha % scaling parameter
+    alpha % parametro de escalamiento
     moving_mean % moving average of the mean
-    moving_var % moving average of the variance
-    momentum % momentum parameter for moving averages
+    moving_var % moving average of the varianc
+    momentum % momentum para promedio
     inputsX=[]; ## Entrada de valores en la propagación hacia adelante
     x_norm=[]; % normalized input data
-    mean % batch mean
-    var % batch variance
+    mu % batch mean
+    sigma % batch variance
 
     ## Número de unidades (neuronas) en la capa
     units=0;
@@ -26,11 +26,7 @@ classdef batchnorm < handle
     outputs=[];
 
     ## Resultados después de la propagación hacia atrás
-    gradientW=[];
     gradientX=[];
-
-    mu=[];
-    sigma=[];
 
     ## Parámetro usado por el filtro que estima la varianza y media completas
     beta=0.9;
@@ -54,9 +50,9 @@ classdef batchnorm < handle
 
       self.alpha = alpha;
       self.momentum = momentum;
-      self.moving_mean = 0;%ruido
-      self.moving_var = 0;
-
+      self.moving_mu = 0;%ruido
+      self.moving_sigma = 0;
+      self.gradientX=[];
     endfunction
 
     ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
@@ -90,14 +86,9 @@ classdef batchnorm < handle
       if (prediction)
 
         ## TODO: Qué hacer en la predicción? %se usa todos los pasos
-        self.mean = mean(inputsX);
-        self.var = var(inputsX)*(m-1)/m;
-        self.x_norm = (inputsX-self.mean)./sqrt(self.var+self.epsilon);
-        out = self.alpha.*self.x_norm + self.beta;
-        % update moving averages of mean and variance
-        self.moving_mean = self.momentum*self.moving_mean + (1-self.momentum)*self.mean;
-        self.moving_var = self.momentum*self.moving_var + (1-self.momentum)*self.var;
 
+        self.x_norm = (inputsX-self.moving_mu)./sqrt(self.moving_sigma+self.epsilon);
+        out = self.alpha.*self.x_norm + self.beta;
         y=out; %respuesta
       else
         if (rows(X)==1)
@@ -105,16 +96,21 @@ classdef batchnorm < handle
           y=X;
         else
           ## TODO: Qué hacer en el entrenamiento?% utilizar solamente minilote
-
-          self.x_norm = (inputsX-self.moving_mean)./sqrt(self.moving_var+self.epsilon);
+          self.mu = mean(inputsX);
+          self.sigma = var(inputsX)*(m-1)/m;
+          self.x_norm = (inputsX-self.mu)./sqrt(self.sigma+self.epsilon);
           out = self.alpha.*self.x_norm + self.beta;
+          % update moving averages of mean and variance
+          self.moving_mu = self.momentum*self.moving_mu + (1-self.momentum)*self.mu;
+          self.moving_sigma = self.momentum*self.moving_sigma + (1-self.momentum)*self.sigma;
+
           y=out;
 ##############################################################################
         endif
         cache.x_norm = self.x_norm;
         cache.alpha = self.alpha;
-        cache.var = self.var;
-        cache.mean = self.mean;
+        cache.sigma = self.sigma;
+        cache.mu = self.mu;
         cache.inputsX = inputsX;
         cache.epsilon = self.epsilon;
       endif
@@ -123,19 +119,20 @@ classdef batchnorm < handle
     ## Propagación hacia atrás recibe dJ/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
-    function g=backward(self,dJds)
+    function g=backward(self,dJds,cache)
 
-
-      dx_norm = dout.*cache.alpha;
-      x_mu = cache.inputsX - cache.mean;
-      var_sqrt_inv = 1./sqrt(cache.var + cache.epsilon);
-      dvar = sum(dx_norm.*x_mu.*(-0.5).*var_sqrt_inv.^3, 1);
-      dmu = sum(dx_norm.*-var_sqrt_inv, 1) + dvar.*mean(-2.*x_mu, 1);
-      dx = dx_norm.*var_sqrt_inv + dvar.*(2./size(self.inputs	,1).*x_mu) + dmu./size(self.inputs	,1);
-      self.alpha = sum(dout.*cache.x_norm, 1);
-      self.beta = sum(dout, 1);
-
-      g=dx;
+##
+##      dx_norm = dout.*cache.alpha;
+##      x_mu = cache.inputsX - cache.mu;
+##      var_sqrt_inv = 1./sqrt(cache.sigma + cache.epsilon);
+##      dvar = sum(dx_norm.*x_mu.*(-0.5).*var_sqrt_inv.^3, 1);
+##      dmu = sum(dx_norm.*-var_sqrt_inv, 1) + dvar.*mean(-2.*x_mu, 1);
+##      dx = dx_norm.*var_sqrt_inv + dvar.*(2./size(self.inputs	,1).*x_mu) + dmu./size(self.inputs	,1);
+##      self.alpha = sum(dout.*cache.x_norm, 1);
+##      self.beta = sum(dout, 1);
+      g=dJds./sqrt(cache.sigma + cache.epsilon);
+      self.gradientX=g;
+      %g=dx;
 
     endfunction
   endmethods

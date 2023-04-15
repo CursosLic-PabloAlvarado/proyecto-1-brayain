@@ -133,10 +133,10 @@ classdef dense < handle
       assert(columns(dJds)==columns(self.W));
       assert(rows(self.inputsX)==rows(dJds));
 
-      self.gradientW = self.inputsX'*dJds(:, 2:end);%Como dW tiene mas col, se quita la primera
+      self.gradientW = [ones(rows(self.inputsX'),1) self.inputsX']*dJds;%Como dW tiene mas col, se quita la primera
       %para que quede de la misma dimensión que W
 
-      self.gradientX = dJds*self.W';
+      self.gradientX = dJds(:, 2:end)*self.W';
       %self.gradientX = [ones(rows(X),1) dJds*self.W'];
       g=self.gradientX;
     endfunction
