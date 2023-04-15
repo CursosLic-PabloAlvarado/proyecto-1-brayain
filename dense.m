@@ -111,7 +111,7 @@ classdef dense < handle
     ## Propagación hacia adelante realiza Y=XW
     function y=forward(self,X,prediction=false)
       ## X debe tener sus datos en las filas
-      assert(columns(X) == rows(self.W)-1);
+      assert(columns(X) == rows(self.W));
 
       self.inputsX=[ones(rows(X),1) X];
       self.W=W;
