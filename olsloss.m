@@ -42,16 +42,18 @@ classdef olsloss < handle
     function st=hasState(self)
       st=false;
     endfunction
-    
+
     ## Propagación hacia adelante.
-    ## 
+    ##
     ## En las capas de error, se requieren dos argumentos.
-    ## 
+    ##
     ## Primero la salida de la última capa de la red y luego las etiquetas
     ## contra las que se comparará y se calculará la pérdida.
     ##
     ## Note que todas las otras capas solo requieren la salida de la capa anterior.
     function J=forward(self,Y,Ygt)
+      q=size(Y)
+      l=size(Ygt)
       if (isscalar(Ygt) && isboolean(Ygt))
         error("Capas de pérdida deben ser las últimas del grafo");
       elseif (isreal(Y) && ismatrix(Y) && (size(Y)==size(Ygt)))
@@ -71,7 +73,7 @@ classdef olsloss < handle
       endif
       ## Asumiendo que dJds es escalar (la salida debería serlo)
       self.gradient = self.diff*dJds;
-      
+
       g=self.gradient;
     endfunction
   endmethods

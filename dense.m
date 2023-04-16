@@ -112,9 +112,8 @@ classdef dense < handle
     function y=forward(self,X,prediction=false)
       ## X debe tener sus datos en las filas
       assert(columns(X) == rows(self.W));
-
-      self.inputsX=[ones(rows(X),1) X];
-      self.W=W;
+      %self.inputsX=X;
+      self.inputsX=[ones(1,columns(X));X];
       %aqui se hace la logica del sesgo
 
       self.outputs = self.inputsX*self.W; %% X matriz de diseño, asuma datos en filas
