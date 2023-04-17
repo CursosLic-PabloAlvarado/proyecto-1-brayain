@@ -55,11 +55,11 @@ if (reuseNetwork && exist(file,"file")==2)
   ann.load(file);
 else
   ann.add({input_layer(2),
-           dense_unbiased(16),
+           dense(16),
            sigmoid(),
-           dense_unbiased(16),
+           dense(16),
            sigmoid(),
-           dense_unbiased(numClasses),
+           dense(numClasses),
            sigmoid()});
 
   #ann.add(input_layer(2));

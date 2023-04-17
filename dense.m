@@ -115,8 +115,7 @@ classdef dense < handle
       %self.inputsX=X;
       self.inputsX=[ones(1,columns(X));X];
       %aqui se hace la logica del sesgo
-
-      self.outputs = self.inputsX*self.W; %% X matriz de diseño, asuma datos en filas
+      self.outputs = X*self.W;%% X matriz de diseño, asuma datos en filas
 
       y=self.outputs;
       # limpie el gradiente en el paso hacia adelante
@@ -130,13 +129,13 @@ classdef dense < handle
     function g=backward(self,dJds)
 
       assert(columns(dJds)==columns(self.W));
-      assert(rows(self.inputsX)==rows(dJds));
+      assert(rows(self.inputsX)-1==rows(dJds));
 
-      self.gradientW = [ones(rows(self.inputsX'),1) self.inputsX']*dJds;%Como dW tiene mas col, se quita la primera
+
+      self.gradientW =self.inputsX'(:, 2:end)*dJds;%Como dW tiene mas col, se quita la primera
       %para que quede de la misma dimensión que W
 
-      self.gradientX = dJds(:, 2:end)*self.W';
-      %self.gradientX = [ones(rows(X),1) dJds*self.W'];
+      self.gradientX = dJds*self.W';
       g=self.gradientX;
     endfunction
   endmethods

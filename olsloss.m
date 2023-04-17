@@ -52,11 +52,11 @@ classdef olsloss < handle
     ##
     ## Note que todas las otras capas solo requieren la salida de la capa anterior.
     function J=forward(self,Y,Ygt)
-      q=size(Y)
-      l=size(Ygt)
+
       if (isscalar(Ygt) && isboolean(Ygt))
         error("Capas de pérdida deben ser las últimas del grafo");
-      elseif (isreal(Y) && ismatrix(Y) && (size(Y)==size(Ygt)))
+      elseif (isreal(Y) && ismatrix(Y) && (size(Y)>=size(Ygt)))
+        Y = Y(1:size(Ygt, 1), :);%debido a que el Y tenía sesgo
         self.diff=Y-Ygt;
         self.outputs = 0.5*(norm(self.diff,"fro")^2); # Frobenius norm
         J=self.outputs;
