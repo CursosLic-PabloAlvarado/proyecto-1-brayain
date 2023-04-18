@@ -34,7 +34,7 @@ Y = oY(idxTrain,:);
 
 vX = oX(idxTest,:);
 vY = oY(idxTest,:);
-
+global errs=[];
 figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
@@ -76,5 +76,14 @@ endif
 
 loss=ann.train(X,Y,vX,vY);
 ann.save(file);
-
+figure(2);
+   hold off;
+   xs = 10:10:1500;
+   ys=errs;
+   plot(xs, ys)
+   legend ("Entrenamiento")
+   xlabel('Iteration')
+   ylabel('Error')
+   title('Error vs. Iteration')
+   hold on;
 ## TODO: falta agregar el resto de pruebas y visualizaciones

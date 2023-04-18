@@ -7,7 +7,7 @@
 
 ## "Capa" sigmoide, que aplica la función logística
 classdef sigmoid < handle
-  properties    
+  properties
     ## Resultados después de la propagación hacia adelante
     outputs=[];
     ## Resultados después de la propagación hacia atrás
@@ -27,13 +27,13 @@ classdef sigmoid < handle
     ## La función devuelve la dimensión de la salida de la capa
     function outSize=init(self,inputSize)
       outSize=inputSize;
-    endfunction    
-    
+    endfunction
+
     ## Retorna false si la capa no tiene un estado que adaptar
     function st=hasState(self)
       st=false;
     endfunction
-        
+
     ## Propagación hacia adelante
     function y=forward(self,a,prediction=false)
       self.outputs = logistic(a);
@@ -47,8 +47,8 @@ classdef sigmoid < handle
         error("backward de sigmoide no compatible con forward previo");
       endif
       localGrad = self.outputs.*(1-self.outputs);
-      self.gradient = localGrad.*dJds;
-      
+      self.gradient = localGrad.*dJds;%&%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
       g=self.gradient;
     endfunction
   endmethods

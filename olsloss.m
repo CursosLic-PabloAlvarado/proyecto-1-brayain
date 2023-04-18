@@ -42,11 +42,11 @@ classdef olsloss < handle
     function st=hasState(self)
       st=false;
     endfunction
-    
+
     ## Propagación hacia adelante.
-    ## 
+    ##
     ## En las capas de error, se requieren dos argumentos.
-    ## 
+    ##
     ## Primero la salida de la última capa de la red y luego las etiquetas
     ## contra las que se comparará y se calculará la pérdida.
     ##
@@ -54,7 +54,8 @@ classdef olsloss < handle
     function J=forward(self,Y,Ygt)
       if (isscalar(Ygt) && isboolean(Ygt))
         error("Capas de pérdida deben ser las últimas del grafo");
-      elseif (isreal(Y) && ismatrix(Y) && (size(Y)==size(Ygt)))
+      elseif (isreal(Y) && ismatrix(Y) && (size(Y)>=size(Ygt)))
+        Y = Y(1:size(Ygt, 1), :);
         self.diff=Y-Ygt;
         self.outputs = 0.5*(norm(self.diff,"fro")^2); # Frobenius norm
         J=self.outputs;
@@ -71,7 +72,7 @@ classdef olsloss < handle
       endif
       ## Asumiendo que dJds es escalar (la salida debería serlo)
       self.gradient = self.diff*dJds;
-      
+
       g=self.gradient;
     endfunction
   endmethods

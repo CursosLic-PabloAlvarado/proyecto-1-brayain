@@ -6,7 +6,7 @@
 ## Tecnológico de Costa Rica
 
 ## Modelo secuencial
-## 
+##
 ## Esta clase encapsula una red neuronal hacia adelante, con métodos para
 ## agregar capas, almacenar, cargar, entrenar y predecir.
 ##
@@ -14,7 +14,7 @@
 ## ser del tipo "input_layer" para indicar la dimensión de los datos de entrada.
 ##
 ## Luego se agregan capas de normalización, combinación, activación.
-## 
+##
 ## La última capa de la red debe ser una capa de error o pérdida.
 classdef sequential < handle
 
@@ -30,28 +30,28 @@ classdef sequential < handle
     beta1 = 0.95    ## Momentum: 0 para no usar momentum
     beta2 = 0.99    ## Polo de filtro de cuadrados (0: no usar Adam))
     epsilon = 1e-9; ## Evite divisiones por cero en Adam
-    
+
     method = 'adam';  ## "batch", "sgd", "momentum", "rmsprop", "adam", "autoclip"
     mbmode = 'withrep';  ## Minibatch mode with replacement
     show   = 'progress';
-   
-    
+
+
     ## Remaining samples used while training with no-replacement
     remainingIndices=[];
-    
+
     ## Last output dimension of a layer while adding layers
     lastOutput = -1;
 
     ## States for each layer, which depend on the optimization method.
     filteredGradients={}
-    
+
   endproperties
 
   methods (Access = private)
-    
+
     ## ----------------------------------------------------------------------
     ## Show progress methods
-    
+
     ## Shows nothing (silent mode)
     function showNothing(self,iteration,currentError)
       ## Nothing is done
@@ -64,6 +64,8 @@ classdef sequential < handle
 
     ## Shows iteration number and loss value
     function showLoss(self,iteration,currentError)
+       global errs;
+       errs(1,iteration/10)=currentError;
        printf("Iteration %i/%i: %f\n",iteration,self.maxiter,currentError);
     endfunction
 
@@ -71,7 +73,7 @@ classdef sequential < handle
     function showProgress(self,iteration,currentError)
       pc=round(100*iteration/self.maxiter);
       done=round(pc*0.7);
-      
+
       printf("%03i%% %s\r",pc,repmat('=',1,done));
     endfunction
 
@@ -115,29 +117,29 @@ classdef sequential < handle
         ## and we must provide a meaningful value
         self.filteredGradients{layerIdx}=stateGradient;
       endif
-      
+
       self.filteredGradients{layerIdx} = ...
         self.beta1*self.filteredGradients{layerIdx} + ...
         (1-self.beta1)*stateGradient;
-        
+
       newState = currentState - self.alpha*self.filteredGradients{layerIdx};
     endfunction
 
 
-    
+
   endmethods
-  
+
   methods (Access = public)
 
     % Construct a sequential model with the desired configuration.
-    % See the configure method for available options    
+    % See the configure method for available options
     function self=sequential(varargin)
 
       warning('off','Octave:shadowed-function');
       pkg load statistics;
 
       self.configure(varargin{:});
-      
+
       layers={};
     endfunction
 
@@ -157,7 +159,7 @@ classdef sequential < handle
     function configure(self,varargin)
 
       parser = inputParser();
-      
+
       validMethods={"batch","sgd","momentum","rmsprop","adam","autoclip"};
       checkMethod = @(x) any(validatestring(x,validMethods));
       addParameter(parser,'method',self.method,checkMethod);
@@ -175,15 +177,15 @@ classdef sequential < handle
       validMBMode={"withrep","norep"};
       checkMBMode=@(x) any(validatestring(x,validMBMode));
       addParameter(parser,"mbmode",self.mbmode,checkMBMode);
-      
+
       validShow={"nothing","dots","loss","progress"};
       checkShow=@(x) any(validatestring(x,validShow));
       addParameter(parser,'show',self.show,checkShow);
-      
+
       parse(parser,varargin{:});
-  
+
       self.method    = parser.Results.method;    ## String with desired method
-      self.alpha     = parser.Results.alpha;     ## Learning rate 
+      self.alpha     = parser.Results.alpha;     ## Learning rate
       self.beta1     = parser.Results.beta1;     ## Momentum parameters beta1
       self.beta2     = parser.Results.beta2;     ## ADAM paramter beta2
       self.maxiter   = parser.Results.maxiter;   ## maxinum number of iterations
@@ -195,7 +197,7 @@ classdef sequential < handle
     endfunction
 
 
-    
+
     function add(self,layer)
       ## Agregue una capa al modelo secuencial
       ## La primera capa debe ser una capa del tipo "input_layer" para así
@@ -222,7 +224,7 @@ classdef sequential < handle
         endif
       endif
     endfunction
-    
+
     function losslog=train(self,X,Y,valSetX=[],valSetY=[])
       ## Entrene el modelo
       ## X: matriz de diseño (datos de entrenamiento en filas)
@@ -231,17 +233,17 @@ classdef sequential < handle
       ## valSetY: set de validación (opcional) (salidas en filas)
       ## losslog: protocolo con loss por época, para set de
       ##          entrenamiento y opcionalmente el set de validación
-      
+
       ## Number of layers
       numLayers = length(self.layers);
-      
+
       if (numLayers<1)
         error("No network structure configured yet.  Layers need to be added first.\n");
       endif
 
       ## Set up the progress information
       progress = [];
-      
+
       switch (self.show)
         case "nothing"
           progress = @(it,err) self.showNothing(it,err);
@@ -265,11 +267,11 @@ classdef sequential < handle
       ## Depending on the minibatch mode (mbmode) the subset returned
       ## by samplerMB uses sampling with-replacement or
       ## without-replacement.
-      
+
       ## batch sampler, just passes through the indices of the whole input set
-      samplerB = @(X) [1:rows(X)]'; 
+      samplerB = @(X) [1:rows(X)]';
       samplerMB=[];
-      
+
       switch(self.mbmode)
         case "withrep"
           ## "With-replacement" means that the random samples can appear
@@ -296,20 +298,20 @@ classdef sequential < handle
           error("Method not implemented yet");
       endswitch
 
-      
+
       ## Initialize loss history tracking
       losslog=[];
       loss=0;
       samplesProcessed=0;
-      
+
       ## Iterate on minibatches
       for ep=1:self.maxiter
 
         idx=sampler(X); # Which sample indices to use next
-        
+
         subX=X(idx,:);
         subY=Y(idx,:);
-          
+
         ## Forward propagation
         y=self.layers{1}.forward(subX);
         for l=2:numLayers-1
@@ -330,81 +332,81 @@ classdef sequential < handle
             self.layers{l}.setState(updater(l,
                                             self.layers{l}.state(),
                                             self.layers{l}.stateGradient()));
-          endif 
+          endif
         endfor
-                    
+
         ## An epoch is the presentation of all samples in the training
         ## set.  We iterate a minibatch at a time (except in batch
         ## mode), so we have to check when an epoch has passed.
-        
+
         samplesProcessed += rows(subX);
         if (samplesProcessed>=rows(X))
           # an epoch has passed
           if (isempty(valSetX))
             ## No validation data available: just store thre training loss
-            losslog = vertcat(losslog,[loss]); 
+            losslog = vertcat(losslog,[loss]);
           else
             ## Compute validation loss, and store both: training and validation
             [vY,vL]=computeLoss(self,valSetX,valSetY);
             losslog = vertcat(losslog,[loss vL]);
           endif
-          
+
           progress(ep,losslog(end));
 
           samplesProcessed=0;
           loss=0;
-          
+
         endif
 
       endfor ## for each iteration
 
       printf("\n");
-      
+
     endfunction
-    
-    
+
+
     ## Predicción con modelo preentrenado
     function y=test(self,X)
       numLayers=length(self.layers);
-      
+
       y=self.layers{1}.forward(X,true); % true indica que es predicción
       for l=2:numLayers-1
         y=self.layers{l}.forward(y,true); % true indica que es predicción
       endfor
-      
+
     endfunction
 
     ## Predicción con modelo preentrenado
     function [y,loss]=computeLoss(self,vX,vY)
       numLayers=length(self.layers);
-    
+
       ## Forward prop
       y=self.layers{1}.forward(vX);
       for l=2:numLayers-1
         y=self.layers{l}.forward(y);
       endfor
       loss=self.layers{numLayers}.forward(y,vY);
-      
+
     endfunction
-    
+
 
     function layer=convertStructToLayer(self,structure,layertype)
-      ## Método usado para coercionar la estructura self en una clase de tipo 
+      ## Método usado para coercionar la estructura self en una clase de tipo
       ## layertype.
       ##
-      ## Es necesaria para solventar el problema de que octave no puede 
-      ## serializar classdef aún. 
+      ## Es necesaria para solventar el problema de que octave no puede
+      ## serializar classdef aún.
       layer=eval(layertype);
       for fn=fieldnames(structure)'
         try
           layer.(fn{1}) = structure.(fn{1});
         catch
           warning("Could not copy field %s",fn{1});
-        end_try_catch 
+        end_try_catch
       endfor
     endfunction
-    
-    
+
+
     function save(self,file)
       ## Guarde red en el archivo.  Posteriormente puede cargar el archivo
       ## con load()
@@ -416,7 +418,7 @@ classdef sequential < handle
       ## para luego poder recrearlos, y una vez que se tienen instancias
       ## vacías podemos convertir las estructuras almacenadas en las clases
       ## concretas.
-      
+
       ## Extraemos primero los nombres de las clases en un cell-array
       ## y convertimos las capas a estructuras de octave
       names={};
@@ -436,20 +438,20 @@ classdef sequential < handle
       param.beta1=self.beta1;
       param.beta2=self.beta2;
       param.epsilon=self.epsilon;
-      param.method=self.method;  
-      
-      save("-v7",file,"param","names","layers");      
+      param.method=self.method;
+
+      save("-v7",file,"param","names","layers");
     endfunction
 
     function o=load(self,file)
-           
+
       ## Cargue red desde el archivo almacenado con save.
       names={};
       layers={};
       param=[];
-      
+
       load("-v7",file,"param","names","layers");
-            
+
       if (length(names) != length(layers))
         error("Corrupted file.  Inconsistent number of stored layers and types");
         return
@@ -460,10 +462,10 @@ classdef sequential < handle
           self.(fn{1}) = param.(fn{1});
         catch
           warning("Could not copy field %s",fn{1});
-        end_try_catch 
+        end_try_catch
       endfor
-      
-      ## De los nombres, recreemos las instancias con los tipos correctos      
+
+      ## De los nombres, recreemos las instancias con los tipos correctos
       for i=1:length(names)
         printf("Loading layer %s\n",names{i});
         self.layers{i}=self.convertStructToLayer(layers{i},names{i});
