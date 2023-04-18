@@ -64,8 +64,6 @@ classdef sequential < handle
 
     ## Shows iteration number and loss value
     function showLoss(self,iteration,currentError)
-       global errs;
-       errs(1,iteration/10)=currentError;
        printf("Iteration %i/%i: %f\n",iteration,self.maxiter,currentError);
     endfunction
 

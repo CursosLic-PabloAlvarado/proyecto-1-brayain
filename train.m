@@ -34,7 +34,6 @@ Y = oY(idxTrain,:);
 
 vX = oX(idxTest,:);
 vY = oY(idxTest,:);
-global errs=[];
 figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
@@ -78,9 +77,9 @@ loss=ann.train(X,Y,vX,vY);
 ann.save(file);
 figure(2);
    hold off;
-   %xs = 10:10:1500;
-   ys=errs;
-   plot(ys)
+   plot(loss(:,1),";training;")
+   hold on;
+   plot(loss(:,2),";validation;")
    legend ("Entrenamiento")
    xlabel('Iteration')
    ylabel('Error')

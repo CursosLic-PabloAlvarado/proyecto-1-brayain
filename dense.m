@@ -73,7 +73,7 @@ classdef dense < handle
 
       ## Dimensiones de la matriz de pesos para calcular Y=XW
       cols = self.units;
-      rows = inputSize+1;
+      rows = inputSize+1;% debido a que hay sesgo
 
       ## LeCun Normal (para selu)
       self.W=normrnd(0,1/sqrt(cols),rows,cols);
