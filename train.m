@@ -8,7 +8,7 @@
 ## Ejemplo de configuración de red neuronal y su entrenamiento
 
 1;
-
+clear classes;
 warning('off','Octave:shadowed-function');
 pkg load statistics;
 
@@ -39,7 +39,7 @@ figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
 
-ann=sequential("maxiter",1500,
+ann=sequential("maxiter",3000,
                "alpha",0.1,
                "beta2",0.99,
                "beta1",0.9,
@@ -78,9 +78,9 @@ loss=ann.train(X,Y,vX,vY);
 ann.save(file);
 figure(2);
    hold off;
-   xs = 10:10:1500;
+   %xs = 10:10:1500;
    ys=errs;
-   plot(xs, ys)
+   plot(ys)
    legend ("Entrenamiento")
    xlabel('Iteration')
    ylabel('Error')
