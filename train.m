@@ -148,17 +148,59 @@ end
 
 end
 
-
-
-
-
-
-
 %Llamar a la función
 evalresults(Y(1:200,:), vY, numClasses);
 
 
 
+################################
+
+ygrap=zeros(size(Y(:,1)));
+for i=1:length(ygrap)
+  c1=Y(i,1);
+  c2=Y(i,2);
+  c3=Y(i,3);
+  c4=Y(i,4);
+  c5=Y(i,5);
+
+  if c1>c2 && c1>c3 && c1>c4 && c1>c5
+    ygrap(i)=1;
+  endif
+  if c2>c1 && c2>c3 && c2>c4 && c2>c5
+    ygrap(i)=2;
+  endif
+  if c3>c2 && c3>c1 && c3>c4 && c3>c5
+    ygrap(i)=3;
+  endif
+  if c4>c2 && c4>c3 && c4>c1 && c4>c5
+    ygrap(i)=4;
+  endif
+  if c5>c2 && c5>c3 && c5>c4 && c5>c1
+    ygrap(i)=5;
+  endif
+endfor
+
+
+cmap = [0,0,0; 1,0,0; 0,1,0; 0,0,1; 0.5,0,0.5; 0,0.5,0.5; 0.5,0.5,0.0];
+
+img = reshape(ygrap,size(X));
+rgb_img = ind2rgb(img, cmap);
+figure(3,"name","Regiones de las clases ganadoras para el espacio de entrada bidimensional");
+image(rgb_img);
+xlabel("culmen length [mm]");
+ylabel("bodymass [g]");
+axis equal;
+hold on;
+
+y_prob = (Y) ./ sum((Y), 2);
+color_weight = y_prob * cmap'; % Calcula los pesos para cada color
+mixed_color= reshape(color_weight, [500 500 3]);
+
+figure(4,"name","Ponderación de colores asignados a las clases, de acuerdo a la probabilidad de pertenecer a esa clase");
+image(mixed_color);
+xlabel("culmen length [mm]");
+ylabel("bodymass [g]");
+axis equal;
 
 
 
