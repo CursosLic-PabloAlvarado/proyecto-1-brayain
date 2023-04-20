@@ -39,7 +39,7 @@ hold off;
 plot_data(X,Y);
 
 ann=sequential("maxiter",3000,
-               "alpha",0.1,
+               "alpha",0.05,
                "beta2",0.99,
                "beta1",0.9,
                "minibatch",32,
@@ -75,14 +75,97 @@ endif
 
 loss=ann.train(X,Y,vX,vY);
 ann.save(file);
+
+## TODO: falta agregar el resto de pruebas y visualizaciones
+
+
+############################
 figure(2);
    hold off;
    plot(loss(:,1),";training;")
+
    hold on;
    plot(loss(:,2),";validation;")
-   legend ("Entrenamiento")
+
    xlabel('Iteration')
    ylabel('Error')
    title('Error vs. Iteration')
    hold on;
-## TODO: falta agregar el resto de pruebas y visualizaciones
+
+############################
+
+function [confusionMatrix] = calculateConfusionMatrix(actualLabels, predictedLabels, numClasses)
+% Función que calcula la matriz de confusión para un conjunto de etiquetas de
+% verdad de referencia y etiquetas predichas.
+
+% confusionMatrix es la matriz de confusión de tamaño (numClasses, numClasses)
+
+confusionMatrix = zeros(numClasses, numClasses);
+
+for i = 1:numClasses
+    for j = 1:numClasses
+        % calcular la cantidad de instancias que pertenecen a la clase i y que han sido clasificadas como clase j
+        confusionMatrix(i, j) = sum(actualLabels(:, i) & predictedLabels(:, j));
+    end
+end
+
+end
+
+
+function [accuracy, precision, recall] = evalresults(actualLabels, predictedLabels, numClasses)
+
+% accuracy: exactitud de la clasificación
+% precision: precisión de la clasificación
+% recall: exhaustividad de la clasificación
+
+confusionMatrix = calculateConfusionMatrix(actualLabels, predictedLabels, numClasses);
+
+
+
+
+% calcular exactitud
+accuracy = sum(diag(confusionMatrix)) / sum(confusionMatrix(:));
+
+% calcular precisión y exhaustividad por clase
+precision = zeros(numClasses, 1);
+recall = zeros(numClasses, 1);
+
+for i = 1:numClasses
+    precision(i) = confusionMatrix(i, i) / sum(confusionMatrix(:, i));
+    recall(i) = confusionMatrix(i, i) / sum(confusionMatrix(i, :));
+end
+
+
+
+fprintf('Resultados de clasificacion de la matriz de confusion \v');
+
+fprintf('Clase \t Precisión \t Exhaustividad \t Exactitud\n');
+for i = 1:5
+    fprintf('%d \t %f \t %f \t %f\n', i, precision(i), recall(i), accuracy);
+end
+
+
+
+end
+
+
+
+
+
+
+
+%Llamar a la función
+evalresults(Y(1:200,:), vY, numClasses);
+
+
+
+
+
+
+
+
+
+
+
+
+
