@@ -40,3 +40,5 @@ Código base para el proyecto 1 del curso de aprendizaje automático.
   una red neuronal y entrenarla.  Se presentan dos formas de armar la
   red agregando todas las capas de una sola vez usando un arreglo de celdas,
   o agregando las capas una a una (comentado).
+- softmaxvisualizer.m
+  Script para poder visualizar los resultados bidimensionales de forma "pie", recibe las matrices X y resultado Y
