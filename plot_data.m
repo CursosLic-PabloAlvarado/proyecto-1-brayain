@@ -19,7 +19,7 @@
 ## X: holds the 2D data, one sample in each row
 ## Y: holds the class of each sample, in the corresponding row
 ## mono: if given, the internal color palette is modified
-##       [r,g,b]: by the given color 
+##       [r,g,b]: by the given color
 ##       "brighter": by a brighter color
 ##       "darker": by a darker color
 ##       "complementary": by the complementary color
@@ -35,10 +35,10 @@ function plot_data(X,Y,mono=[])
   markers = {'+';'o';'*';'x';'s';'d';'^';'v';'>';'<'};
   colors  = [ 1  ,0  ,0  ;
               0  ,0.7,0  ;
-              0  ,0  ,0.8; 
+              0  ,0  ,0.8;
               1  ,0  ,1  ;
               0  ,0.7,0.7;
-              0.8,0.6,0.0; 
+              0.8,0.6,0.0;
               0.8,0.5,0.2;
               0.2,0.5,0.3;
               0.6,0.3,0.8;
@@ -46,7 +46,7 @@ function plot_data(X,Y,mono=[])
               0.6,0.8,0.3;
               0.1,0.4,0.6;
               0.5,0.5,0.5];
-  
+
   if (ischar(mono))
     if (strcmp(mono,"brighter"))
       colors=0.5*(ones(size(colors))+colors);
@@ -58,19 +58,19 @@ function plot_data(X,Y,mono=[])
   elseif (length(mono)==3)
     colors=ones(rows(colors),1)*reshape(mono,1,3);
   endif
-  
+
   for i=[1:columns(Y)]
     ## Select data for the current i-th class
     xx=X(idx==i,1);
     yy=X(idx==i,2);
-    
+
     ## We cannot simply pass the arguments to the plot, so we have
     ## to build a string of the whole plot command and evaluate it
     mk=markers{mod(i-1,length(markers))+1};
     cl=mat2str(colors(mod(i-1,rows(colors))+1,:),3);
-    
+
     plotstr=strcat("plot(xx,yy,'",mk,"',\"markeredgecolor\",",cl,",\"markersize\",7)");
-    eval(plotstr);    
+    eval(plotstr);
 
     hold on;
   endfor

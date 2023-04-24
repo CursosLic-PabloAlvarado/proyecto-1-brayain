@@ -5,7 +5,7 @@
 ## Escuela de Ingeniería Electrónica
 ## Tecnológico de Costa Rica
 
-## Ejemplo de configuración de red neuronal y su entrenamiento
+## Ejemplo de configuración de red neuronal Y su entrenamiento
 
 1;
 clear classes;
@@ -76,7 +76,7 @@ endif
 loss=ann.train(X,Y,vX,vY);
 ann.save(file);
 
-## TODO: falta agregar el resto de pruebas y visualizaciones
+## TODO: falta agregar el resto de pruebas Y visualizaciones
 
 
 ############################
@@ -96,7 +96,7 @@ figure(2);
 
 function [confusionMatrix] = calculateConfusionMatrix(actualLabels, predictedLabels, numClasses)
 % Función que calcula la matriz de confusión para un conjunto de etiquetas de
-% verdad de referencia y etiquetas predichas.
+% verdad de referencia Y etiquetas predichas.
 
 % confusionMatrix es la matriz de confusión de tamaño (numClasses, numClasses)
 
@@ -104,7 +104,7 @@ confusionMatrix = zeros(numClasses, numClasses);
 
 for i = 1:numClasses
     for j = 1:numClasses
-        % calcular la cantidad de instancias que pertenecen a la clase i y que han sido clasificadas como clase j
+        % calcular la cantidad de instancias que pertenecen a la clase i Y que han sido clasificadas como clase j
         confusionMatrix(i, j) = sum(actualLabels(:, i) & predictedLabels(:, j));
     end
 end
@@ -126,7 +126,7 @@ confusionMatrix = calculateConfusionMatrix(actualLabels, predictedLabels, numCla
 % calcular exactitud
 accuracy = sum(diag(confusionMatrix)) / sum(confusionMatrix(:));
 
-% calcular precisión y exhaustividad por clase
+% calcular precisión Y exhaustividad por clase
 precision = zeros(numClasses, 1);
 recall = zeros(numClasses, 1);
 
@@ -139,7 +139,7 @@ end
 
 fprintf('Resultados de clasificacion de la matriz de confusion \v');
 
-fprintf('Clase \t Precisión \t Exhaustividad \t Exactitud\n');
+fprintf('Clase \t Precision \t Exhaustividad \t Exactitud\n');
 for i = 1:5
     fprintf('%d \t %f \t %f \t %f\n', i, precision(i), recall(i), accuracy);
 end
@@ -152,62 +152,4 @@ end
 evalresults(Y(1:200,:), vY, numClasses);
 
 
-
-################################
-
-ygrap=zeros(size(Y(:,1)));
-for i=1:length(ygrap)
-  c1=Y(i,1);
-  c2=Y(i,2);
-  c3=Y(i,3);
-  c4=Y(i,4);
-  c5=Y(i,5);
-
-  if c1>c2 && c1>c3 && c1>c4 && c1>c5
-    ygrap(i)=1;
-  endif
-  if c2>c1 && c2>c3 && c2>c4 && c2>c5
-    ygrap(i)=2;
-  endif
-  if c3>c2 && c3>c1 && c3>c4 && c3>c5
-    ygrap(i)=3;
-  endif
-  if c4>c2 && c4>c3 && c4>c1 && c4>c5
-    ygrap(i)=4;
-  endif
-  if c5>c2 && c5>c3 && c5>c4 && c5>c1
-    ygrap(i)=5;
-  endif
-endfor
-
-
-cmap = [0,0,0; 1,0,0; 0,1,0; 0,0,1; 0.5,0,0.5; 0,0.5,0.5; 0.5,0.5,0.0];
-
-img = reshape(ygrap,size(X));
-rgb_img = ind2rgb(img, cmap);
-figure(3,"name","Regiones de las clases ganadoras para el espacio de entrada bidimensional");
-image(rgb_img);
-xlabel("culmen length [mm]");
-ylabel("bodymass [g]");
-axis equal;
-hold on;
-
-y_prob = (Y) ./ sum((Y), 2);
-color_weight = y_prob * cmap'; % Calcula los pesos para cada color
-mixed_color= reshape(color_weight, [500 500 3]);
-
-figure(4,"name","Ponderación de colores asignados a las clases, de acuerdo a la probabilidad de pertenecer a esa clase");
-image(mixed_color);
-xlabel("culmen length [mm]");
-ylabel("bodymass [g]");
-axis equal;
-
-
-
-
-
-
-
-
-
-
+softmaxvisualizer(X,Y)
