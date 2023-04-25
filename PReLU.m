@@ -9,7 +9,7 @@
 ##
 ## Este código es un ejemplo de implementación de una capa, con todos los métodos
 ## e interfaces que deben respetarse.
-classdef lelelu < handle
+classdef prelu < handle
 
   ## En GNU/Octave "< handle" indica que la clase se deriva de handle
   ## lo que evita que cada vez que se llame un método se cree un
