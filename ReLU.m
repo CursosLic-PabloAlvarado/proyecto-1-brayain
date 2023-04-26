@@ -21,96 +21,42 @@ classdef relu < handle
     ## Ejemplo Número de unidades (neuronas) en la capa
     ## (solo un ejemplo, puede borrarse)
     units=0;
-    output=[];
+    outputs=[];
     gradient=[];
-    soft=0;
   endproperties
 
   methods
-    ## Constructor inicializa todo vacío
-    function self=relu(units)
-      if (nargin > 0)
-        self.units=units;
-      else
-        self.units=0;
-      endif
-      self.output=[];
+    ## Constructor ejecuta un forward si se le pasan datos
+    function self=relu()
+      self.outputs=[];
       self.gradient=[];
     endfunction
 
-    ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
+    ## En funciones de activación el init no hace mayor cosa más que
+    ## indicar que la dimensión de la salida es la misma que la entrada.
     ##
-    ## La función devuelve la dimensión de la salida de la capa y recibe
-    ## la dimensión de los datos a la entrada de la capa
+    ## La función devuelve la dimensión de la salida de la capa
     function outSize=init(self,inputSize)
       outSize=inputSize;
     endfunction
 
-    ## Retorna true si la capa tiene un estado que adaptar (como pesos).
-    ##
-    ## En ese caso, es necesario tener las funciones stateGradient(),
-    ## state() y setState()
+    ## Retorna false si la capa no tiene un estado que adaptar
     function st=hasState(self)
       st=false;
     endfunction
 
-
-    ## Si hasState() retorna false, las siguientes tres funciones
-    ## pueden borrarse:
-    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-    ## Retorne el gradiente del estado, que existe solo si esta capa tiene
-    ## algún estado que debe ser aprendido
-    ##
-    ## Este gradiente es utilizado por el modelo para actualizar el estado
-    ##
-    ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.
-    function g=stateGradient(self)
-      g=[];
-    endfunction
-
-    ## Retorne el estado aprendido
-    ##
-    ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.
-    function st=state(self)
-      st=[];
-    endfunction
-
-    ## Reescriba el estado aprendido
-    ##
-    ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.
-    function setState(self,W)
-    endfunction
-
-    ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-
-    ## Propagación hacia adelante realiza W*x
-    ## X puede ser un vector columna o una matriz.
-    ##
-    ## Si X es un vector columna es interpretado como un dato.  Si X
-    ## es una matriz, se asume que es una matriz de diseño convencional,
-    ## con cada dato en una fila.
-    ##
-    ## El parámetro 'prediction' permite determinar si este método
-    ## está siendo llamado en el proceso de entrenamiento (false) o en el
-    ## proceso de predicción (true)
+    ## Propagación hacia adelante
     function y=forward(self,X,prediction=false)
-       self.output= (x > 0) .* x;
+       self.output= max(0, x);
        y=self.output;
     endfunction
 
-    ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
-    ## y retorna el gradiente necesario para la retropropagación. que será
-    ## pasado a nodos anteriores en el grafo.
+    ## Propagación hacia atrás recibe dJ/ds de siguientes nodos
     function g=backward(self,dJds)
-      g=dJds;
       localGrad=(self.output>0);
       self.gradient=  localGrad.*dJds;
+      g=  self.gradient;
     endfunction
   endmethods
 endclassdef
+

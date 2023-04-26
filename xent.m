@@ -57,7 +57,7 @@ classdef olsloss < handle
       elseif (isreal(Y) && ismatrix(Y) && (size(Y)>=size(Ygt)))
         Y = Y(1:size(Ygt, 1), :);
         self.diff=Y-Ygt;
-        self.outputs = 0.5*(norm(self.diff,"fro")^2); # Frobenius norm
+        self.outputs = -sum(Ygt.*log(Y)); # Frobenius norm
         J=self.outputs;
         self.gradient = [];
       else

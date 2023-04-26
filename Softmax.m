@@ -18,89 +18,32 @@ classdef softmax < handle
   ## se usara "handle".
 
   properties
-    ## Ejemplo Número de unidades (neuronas) en la capa
-    ## (solo un ejemplo, puede borrarse)
     units=0;
     output=[];
     gradient=[];
     soft=1;
   endproperties
 
-  methods
-    ## Constructor inicializa todo vacío
-    function self=softmax(units)
-      if (nargin > 0)
-        self.units=units;
-      else
-        self.units=0;
-      endif
-
-      ## TODO: Inicialice sus propiedades aquí
-      self.output=[];
+ methods
+    ## Constructor ejecuta un forward si se le pasan datos
+    function self=softmax()
+      self.outputs=[];
       self.gradient=[];
     endfunction
 
-    ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
+    ## En funciones de activación el init no hace mayor cosa más que
+    ## indicar que la dimensión de la salida es la misma que la entrada.
     ##
-    ## La función devuelve la dimensión de la salida de la capa y recibe
-    ## la dimensión de los datos a la entrada de la capa
+    ## La función devuelve la dimensión de la salida de la capa
     function outSize=init(self,inputSize)
       outSize=inputSize;
     endfunction
 
-    ## Retorna true si la capa tiene un estado que adaptar (como pesos).
-    ##
-    ## En ese caso, es necesario tener las funciones stateGradient(),
-    ## state() y setState()
+    ## Retorna false si la capa no tiene un estado que adaptar
     function st=hasState(self)
       st=false;
     endfunction
 
-
-    ## Si hasState() retorna false, las siguientes tres funciones
-    ## pueden borrarse:
-    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-    ## Retorne el gradiente del estado, que existe solo si esta capa tiene
-    ## algún estado que debe ser aprendido
-    ##
-    ## Este gradiente es utilizado por el modelo para actualizar el estado
-    ##
-    ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.
-    function g=stateGradient(self)
-      g=[];
-    endfunction
-
-    ## Retorne el estado aprendido
-    ##
-    ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.
-    function st=state(self)
-      st=[];
-    endfunction
-
-    ## Reescriba el estado aprendido
-    ##
-    ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
-    ## returna false, entonces puede eliminarse este método.
-    function setState(self,W)
-    endfunction
-
-    ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-
-    ## Propagación hacia adelante realiza W*x
-    ## X puede ser un vector columna o una matriz.
-    ##
-    ## Si X es un vector columna es interpretado como un dato.  Si X
-    ## es una matriz, se asume que es una matriz de diseño convencional,
-    ## con cada dato en una fila.
-    ##
-    ## El parámetro 'prediction' permite determinar si este método
-    ## está siendo llamado en el proceso de entrenamiento (false) o en el
-    ## proceso de predicción (true)
     function y=forward(self,X,prediction=false)
       val= exp(X);
       n=sum(val)-ones(1,columns(val));
@@ -112,9 +55,9 @@ classdef softmax < handle
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
     function g=backward(self,dJds)
-      g=dJds;
       localGrad = self.output.*(1-self.output);
       self.gradient = localGrad.*dJds;
+      g=self.gradient;
     endfunction
   endmethods
 endclassdef
