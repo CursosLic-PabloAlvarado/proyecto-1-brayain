@@ -22,10 +22,15 @@ classdef prelu < handle
     ## (solo un ejemplo, puede borrarse)
     units=0;
     alpha = 0.01,   ##hiperparametro de PReLU
+    ## Entrada de valores en la propagación hacia adelante
+    inputsX=[];
 
-    dEdW = [];      ##gradiente de la capa
+    ## Resultados después de la propagación hacia adelante
+    outputs=[];
     W = [];         ##parametros de la capa
-
+     ## Resultados después de la propagación hacia atrás
+    gradientW=[];
+    gradientX=[]
   endproperties
 
   methods
@@ -44,7 +49,13 @@ classdef prelu < handle
       endif
 
       ## TODO: Inicialice sus propiedades aquí
-      self.W = ones(self.units, 1)*self.alpha;    ##inicializacion de parametros de la capa
+
+      self.inputsX=[];
+      self.W=[];
+      self.outputs=[];
+
+      self.gradientX=[];
+      self.gradientW=[];
     endfunction
 
     ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
@@ -76,7 +87,7 @@ classdef prelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function g=stateGradient(self)
-      g=self.dEdW;
+      g=self.gradientW;
     endfunction
 
     ## Retorne el estado aprendido
@@ -110,18 +121,21 @@ classdef prelu < handle
     ## está siendo llamado en el proceso de entrenamiento (false) o en el
     ## proceso de predicción (true)
     function y=forward(self,X,prediction=false)
-      y = max(0, X) + self.W * min(0, X);
+      self.inputsX=X;
+      self.outputs = max(0, X) + self.alpha* min(0, X); %% X matriz de diseño, asuma datos en filas
+      y=self.outputs;
+
+      # limpie el gradiente en el paso hacia adelante
+      self.gradientX = [];
+      self.gradientW = [];
     endfunction
 
     ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
     function g=backward(self,dJds)
-      pos_mask = dJds > 0;
-      neg_mask = dJds <= 0;
-      g = dJds;
-      g(neg_mask) = g(neg_mask) * self.W(neg_mask);
-      self.dEdW = sum(sum(dJds(neg_mask) .* (-X(neg_mask))));
+      self.gradientX =(self.inputsX >= 0) .* dJds + (self.inputsX < 0) .* self.alpha .* dJds;
+      g=self.gradientX;
     endfunction
   endmethods
 endclassdef

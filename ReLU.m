@@ -47,13 +47,14 @@ classdef relu < handle
 
     ## Propagación hacia adelante
     function y=forward(self,X,prediction=false)
-       self.output= max(0, x);
-       y=self.output;
+       self.outputs= max(0, X);
+       y= self.outputs;
+      self.gradient = [];
     endfunction
 
     ## Propagación hacia atrás recibe dJ/ds de siguientes nodos
     function g=backward(self,dJds)
-      localGrad=(self.output>0);
+      localGrad=(self.outputs>0);
       self.gradient=  localGrad.*dJds;
       g=  self.gradient;
     endfunction

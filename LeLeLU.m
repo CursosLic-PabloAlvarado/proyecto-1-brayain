@@ -20,11 +20,18 @@ classdef lelelu < handle
   properties
     ## Ejemplo Número de unidades (neuronas) en la capa
     ## (solo un ejemplo, puede borrarse)
-    units = 0;
-    W = []; ## matriz de pesos
-    b = []; ## vector de bias
-    a = 0.1; ## alpha para la Leaky ReLU
+    units=0;
+    alpha = 0.01,   ##hiperparametro de PReLU
+    ## Entrada de valores en la propagación hacia adelante
+    inputsX=[];
 
+    ## Resultados después de la propagación hacia adelante
+    outputs=[];
+    W = [];         ##parametros de la capa
+     ## Resultados después de la propagación hacia atrás
+    gradientW=[];
+    gradientX=[]
+    state;
   endproperties
 
   methods
@@ -36,10 +43,20 @@ classdef lelelu < handle
         self.units=0;
       endif
 
+      if (nargin > 1)
+        self.alpha = alpha;
+      else
+        self.alpha = 0.01;
+      endif
+
       ## TODO: Inicialice sus propiedades aquí
-      ## Inicializar pesos y bias aleatoriamente
-      self.W = randn(self.units, inputSize) * 0.01;
-      self.b = zeros(self.units, 1);
+
+      self.inputsX=[];
+      self.W=[];
+      self.outputs=[];
+      self.gradientX=[];
+      self.gradientW=[];
+      self.state;
     endfunction
 
     ## Inicializa el estado de la capa (p.ej. los pesos si los hay)
@@ -47,9 +64,7 @@ classdef lelelu < handle
     ## La función devuelve la dimensión de la salida de la capa y recibe
     ## la dimensión de los datos a la entrada de la capa
     function outSize=init(self,inputSize)
-      self.W = randn(self.units, inputSize) * 0.01;
-      self.b = zeros(self.units, 1);
-      outSize = self.units;
+      outSize=inputSize;
     endfunction
 
     ## Retorna true si la capa tiene un estado que adaptar (como pesos).
@@ -63,6 +78,7 @@ classdef lelelu < handle
 
     ## Si hasState() retorna false, las siguientes tres funciones
     ## pueden borrarse:
+    ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     ## Retorne el gradiente del estado, que existe solo si esta capa tiene
     ## algún estado que debe ser aprendido
@@ -72,7 +88,7 @@ classdef lelelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function g=stateGradient(self)
-      g = [self.W(:); self.b(:)];
+      g=self.gradientW;
     endfunction
 
     ## Retorne el estado aprendido
@@ -80,7 +96,7 @@ classdef lelelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function st=state(self)
-      s = [self.W(:); self.b(:)];
+      st=self.W;
     endfunction
 
     ## Reescriba el estado aprendido
@@ -88,11 +104,7 @@ classdef lelelu < handle
     ## Si la capa no tiene estado que actualizar (como pesos), y si hasState()
     ## returna false, entonces puede eliminarse este método.
     function setState(self,W)
-      W_size = self.units * size(state, 1) / (size(state, 1) + 1);
-      b_size = self.units - W_size;
-
-      self.W = reshape(state(1:W_size), self.units, []);
-      self.b = reshape(state(W_size+1:end), b_size, []);
+      self.W=W;
     endfunction
 
     ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -110,27 +122,49 @@ classdef lelelu < handle
     ## está siendo llamado en el proceso de entrenamiento (false) o en el
     ## proceso de predicción (true)
     function y=forward(self,X,prediction=false)
-      z = self.W * X + self.b;
-      y = max(self.a * z, z);
+      self.inputsX=X;
+      self.outputs = max(0, X) + self.alpha* min(0, X); %% X matriz de diseño, asuma datos en filas
+      y=self.outputs;
+
+      # limpie el gradiente en el paso hacia adelante
+      self.gradientX = [];
+      self.gradientW = [];
     endfunction
 
     ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
     function g=backward(self,dJds)
-      dJdz = dJdy .* (self.W >= 0) + self.a * dJdy .* (self.W < 0);
-      g = {dJdz, self.W * dJdz};
-    endfunction
-
-    function [dJdW, dJdb] = backwardState(self, dJds)
-      dJdW = dJds{1} * self.W';
-      dJdb = sum(dJds{1})';
-    endfunction
-
-    function [dJdX, dJdW, dJdb] = backwardParams(self, X, dJds)
-      dJdX = dJds{2} * self.W;
-      dJdW = X' * dJds{2};
-      dJdb = sum(dJds{2})';
+      self.gradientX =dJds .* ((self.inputsX > 0) + self.alpha * (self.inputsX <= 0));
+      self.state = self.state + mean(mean(self.gradientX.* (self.inputsX <= 0)));
+      g=self.gradientX;
     endfunction
   endmethods
 endclassdef
+
+
+
+
+
+
+
+
+##    function y=forward(self,X,prediction=false)
+##
+##      self.inputsX=X;
+##
+##      self.outputs = max(0, X) + self.alpha* min(0, X);
+##      y=self.outputs;
+##    endfunction
+##
+##    ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
+##    ## y retorna el gradiente necesario para la retropropagación. que será
+##    ## pasado a nodos anteriores en el grafo.
+##    function g=backward(self,dJds)
+##      self.gradientX = dJds .* ((self.inputsX > 0) + self.state * (self.inputsX <= 0));
+##      self.state = self.state + mean(mean(dx .* (X <= 0)));
+##      g=self.gradientX;
+##    endfunction
+##
+##  endmethods
+##endclassdef

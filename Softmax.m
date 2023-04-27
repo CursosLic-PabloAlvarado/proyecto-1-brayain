@@ -19,16 +19,23 @@ classdef softmax < handle
 
   properties
     units=0;
-    output=[];
+    outputs=[];
     gradient=[];
-    soft=1;
+    inputsX=[];
+    dim;
   endproperties
 
  methods
     ## Constructor ejecuta un forward si se le pasan datos
     function self=softmax()
+      if nargin > 0
+          self.dim = dim;
+      else
+          self.dim = 1;
+      end
       self.outputs=[];
       self.gradient=[];
+      self.inputsX=[];
     endfunction
 
     ## En funciones de activación el init no hace mayor cosa más que
@@ -45,19 +52,51 @@ classdef softmax < handle
     endfunction
 
     function y=forward(self,X,prediction=false)
-      val= exp(X);
-      n=sum(val)-ones(1,columns(val));
-      self.output = val ./ n;
-      y=self.output;
+
+      self.inputsX=X;
+      exp_input = exp(X);
+      exp_sum = sum(exp_input, self.dim);
+      self.outputs = bsxfun(@rdivide, exp_input, exp_sum);
+      y=self.outputs;
     endfunction
 
     ## Propagación hacia atrás recibe dL/ds de siguientes nodos del grafo,
     ## y retorna el gradiente necesario para la retropropagación. que será
     ## pasado a nodos anteriores en el grafo.
-    function g=backward(self,dJds)
-      localGrad = self.output.*(1-self.output);
-      self.gradient = localGrad.*dJds;
-      g=self.gradient;
+    function g=backward(self,dJds) %OBTENIDO DE CHATGPT
+    % Compute softmax function
+    output = self.forward(self.inputsX);
+
+    % Compute the size of the self.inputsX tensor and the output tensor
+    s_input = size(self.inputsX);
+    s_output = size(output);
+
+    % Reshape the output and gradient tensors to matrices
+    output_reshape = reshape(output, [], s_output(end));
+    grad_output_reshape = reshape(dJds, [], s_output(end));
+
+    % Compute the Jacobian matrix
+    if self.dim == s_input(end)
+        % If the softmax dimension is the last dimension, use the existing code
+        jacobian = output_reshape .* (eye(s_output(end)) - output_reshape');
+    else
+        % If the softmax dimension is not the last dimension, compute the Jacobian manually
+        jacobian = zeros(s_output(end));
+        for i = 1:s_input(end)
+            for j = 1:s_input(end)
+                if i == j
+                    jacobian(i,i) = output_reshape(i,:) * (1 - output_reshape(j,:))';
+                else
+                    jacobian(i,j) = -output_reshape(i,:) * output_reshape(j,:)';
+                end
+            end
+        end
+    end
+
+    % Compute the gradient of the self.inputsX tensor using the chain rule
+    grad_input_reshape = grad_output_reshape * jacobian';
+    grad_input = reshape(grad_input_reshape, s_input);
+    g=grad_input;
     endfunction
   endmethods
 endclassdef
