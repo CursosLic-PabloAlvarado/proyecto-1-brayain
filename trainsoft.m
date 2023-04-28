@@ -39,7 +39,7 @@ hold off;
 plot_data(X,Y);
 
 ann=sequential("maxiter",3000,
-               "alpha",0.05,
+               "alpha",0.1,
                "beta2",0.99,
                "beta1",0.9,
                "minibatch",32,
@@ -55,9 +55,9 @@ if (reuseNetwork && exist(file,"file")==2)
 else
   ann.add({input_layer(2),
            dense(16),
-           softmax(),
+           softmax(16),
            dense(16),
-           softmax(),
+           softmax(16),
            dense(numClasses),
            sigmoid()});
 
