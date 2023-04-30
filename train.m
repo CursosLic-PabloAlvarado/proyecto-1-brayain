@@ -43,7 +43,7 @@ ann=sequential("maxiter",3000,
                "beta2",0.99,
                "beta1",0.9,
                "minibatch",32,
-               "method","momentum",
+               "method","sgd",
                "show","loss");
 
 file="ann.dat";

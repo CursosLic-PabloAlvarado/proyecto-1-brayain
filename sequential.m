@@ -96,7 +96,7 @@ classdef sequential < handle
     ## method.
 
     ## State update for batch and SGD
-    function newState = update(self,layerIdx,
+    function newState = updateSimple(self,layerIdx,
                                      currentState,
                                      stateGradient)
       newState = currentState - self.alpha*stateGradient;
@@ -122,88 +122,6 @@ classdef sequential < handle
 
       newState = currentState - self.alpha*self.filteredGradients{layerIdx};
     endfunction
-
-
-
-    ## State update for RMS
-    function newState = updateRMSprop(self, layerIdx, currentState, stateGradient)
-        if ((layerIdx>length(self.meanSquareGradients)) || isempty(self.meanSquareGradients{layerIdx}))
-            ## RMSprop needs an initial mean square gradient.  If not
-            ## available yet, it means this is the first time we pass by,
-            ## and we must provide a meaningful value
-            self.meanSquareGradients{layerIdx} = zeros(size(stateGradient));
-        endif
-
-        self.meanSquareGradients{layerIdx} = self.decayRate * self.meanSquareGradients{layerIdx} + (1 - self.decayRate) * (stateGradient.^2);
-        newState = currentState - self.alpha * (stateGradient ./ (sqrt(self.meanSquareGradients{layerIdx}) + self.epsilon));
-    endfunction
-
-
-
-    ## State update for ADAM
-    function newState = updateAdam(self, layerIdx, currentState, stateGradient)
-        if ((layerIdx>length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
-            ## ADAM needs an initial filtered gradient.  If not
-            ## available yet, it means this is the first time we pass by,
-            ## and we must provide a meaningful value
-            self.filteredGradients{layerIdx} = zeros(size(stateGradient));
-            self.meanSquareGradients{layerIdx} = zeros(size(stateGradient));
-        endif
-
-        self.filteredGradients{layerIdx} = self.beta1 * self.filteredGradients{layerIdx} + (1 - self.beta1) * stateGradient;
-        self.meanSquareGradients{layerIdx} = self.beta2 * self.meanSquareGradients{layerIdx} + (1 - self.beta2) * (stateGradient .^ 2);
-
-        ## Bias correction
-        filteredBias = self.filteredGradients{layerIdx} / (1 - self.beta1^self.iteration);
-        meanSquareBias = self.meanSquareGradients{layerIdx} / (1 - self.beta2^self.iteration);
-
-        newState = currentState - self.alpha * (filteredBias ./ (sqrt(meanSquareBias) + self.epsilon));
-        self.iteration += 1;
-    endfunction
-
-
-
-    ## State update for autoclip
-    function newState = updateAutoClip(self, currentState, stateGradient)
-        if isempty(self.gradientNorm)
-            self.gradientNorm = norm(stateGradient);
-        else
-            self.gradientNorm = self.beta * self.gradientNorm + (1 - self.beta) * norm(stateGradient);
-        endif
-
-        maxNorm = self.clipValue * self.gradientNorm;
-        clippedGradient = stateGradient;
-
-        gradientNorm = norm(stateGradient);
-        if (gradientNorm > maxNorm)
-            clippedGradient = clippedGradient * maxNorm / gradientNorm;
-        endif
-
-        newState = currentState - self.alpha * clippedGradient;
-    endfunction
-
-
-
-
-    ## State update for Radam
-    function newState = updateRadam(self, layerIdx, currentState, stateGradient)
-    if ((layerIdx>length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
-        ## RADAM needs an initial filtered gradient.  If not
-        ## available yet, it means this is the first time we pass by,
-        ## and we must provide a meaningful value
-        self.filteredGradients{layerIdx} = zeros(size(stateGradient));
-        self.meanSquareGradients{layerIdx} = zeros(size(stateGradient));
-    endif
-
-    self.filteredGradients{layerIdx} = self.beta1 * self.filteredGradients{layer
-
-
-
-
-
-
-
-
 
 
 
@@ -370,27 +288,13 @@ classdef sequential < handle
       switch (self.method)
         case "batch"
           sampler=samplerB;
-          updater=@(li,tc,g) self.updateMomentum(li,tc,g);
+          updater=@(li,tc,g) self.updateSimple(li,tc,g);
         case "momentum"
           sampler=samplerMB;
           updater=@(li,tc,g) self.updateMomentum(li,tc,g);
         case "sgd"
           sampler=samplerMB;
-          updater=@(tc,g) self.update(tc,g);
-        case "rmsprop"
-          sampler=samplerMB;
-          updater=@(tc,g) self.updateRMSprop(tc,g);
-        case "adam"
-          sampler=samplerMB;
-          updater=@(tc,g) self.updateAdam(tc,g);
-        case "autoclip"
-            sampler = samplerMB;
-            updater = @(tc,g) self.updateAutoClip(tc,g);
-
-        case "radam"
-            sampler = samplerMB;
-            updater = @(tc,g) self.updateRadam(tc,g);
-
+          updater=@(li,tc,g) self.updateSimple(li,tc,g);
         otherwise
           error("Method not implemented yet");
       endswitch
