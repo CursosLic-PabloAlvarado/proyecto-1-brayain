@@ -37,62 +37,104 @@ vY = oY(idxTest,:);
 figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
+##############################################
+methods={"momentum","sgd","batch"};
 
-ann=sequential("maxiter",3000,
-               "alpha",0.05,
-               "beta2",0.99,
-               "beta1",0.9,
-               "minibatch",32,
-               "method","momentum",
-               "show","loss");
+for m=1:length(methods)
+  methodx=methods{m};
+  printf("Probando método '%s'.\n",methodx);
+  msg=sprintf(";%s;",methodx); ## use method in legends
 
-file="ann.dat";
-
-reuseNetwork = false;
-
-if (reuseNetwork && exist(file,"file")==2)
-  ann.load(file);
-else
-  ann.add({input_layer(2),
-           dense(16),
-           sigmoid(),
-           dense(16),
-           sigmoid(),
-           dense(numClasses),
-           sigmoid()});
-
-  #ann.add(input_layer(2));
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(numClasses));
-  #ann.add(sigmoid());
+##  try
+##    opt.configure("method",method); ## Just change the method
+##    [ts,errs]=opt.minimize(@softmax_loss,@softmax_gradloss,theta0,NXtr,Y);
+##    theta=ts{end}
+##
+##    py=softmax_hyp(theta,NXte);
+##    err=sum((py>0.5)!=Yte);
+##    tot=100*(err/rows(Yte));
+##
+##    printf("errores de prueba: %d de %d (%.2f%%)\n", err, length(Yte), tot);
+##
+##    py=softmax_hyp(theta,NXtr);
+##    err=sum((py>0.5)!=Y);
+##    tot=100*(err/rows(Y));
+##    printf("errores de entreneamineto: %d de %d (%.2f%%)\n", err, length(Y), tot);
 
 
-  ann.add(olsloss());
-endif
+################
+    ann=sequential("maxiter",1500,
+                   "alpha",0.05,
+                   "beta2",0.99,
+                   "beta1",0.9,
+                   "minibatch",32,
+                   "method",methodx,
+                   "show","loss");
 
-loss=ann.train(X,Y,vX,vY);
-ann.save(file);
+    file="ann.dat";
+
+    reuseNetwork = false;
+
+    if (reuseNetwork && exist(file,"file")==2)
+      ann.load(file);
+    else
+      ann.add({input_layer(2),
+               dense(16),
+               sigmoid(),
+               dense(16),
+               sigmoid(),
+               dense(numClasses),
+               sigmoid()});
+
+      #ann.add(input_layer(2));
+      #ann.add(dense(16));
+      #ann.add(sigmoid());
+      #ann.add(dense(16));
+      #ann.add(sigmoid());
+      #ann.add(dense(numClasses));
+      #ann.add(sigmoid());
+
+
+      ann.add(olsloss());
+    endif
+
+    loss=ann.train(X,Y,vX,vY);
+    ann.save(file);
+    ############################
+    if strcmp(methodx, 'batch')
+      y_result = loss(:,1); % Your Y result column vector
+      y_result_every_10th = y_result(1:10:end); % Extract every 10th element
+      figure(2);
+      plot(y_result_every_10th,msg,"linewidth",2)
+      title('Error vs. Iteration')
+      hold on;
+
+    else
+       figure(2);
+       plot(loss(:,1),msg,"linewidth",2)
+       title('Error vs. Iteration')
+       hold on;
+
+    endif
+
+    ############################
+##  catch
+##    printf("\n### Error detectado probando método '%s': ###\n %s\n\n",
+##           methodx,lasterror.message);
+##  end_try_catch
+endfor
+xlabel("Iteration");
+ylabel("Loss");
+grid on;
+hold off;
+##################
+
+
 
 ## TODO: falta agregar el resto de pruebas Y visualizaciones
 
 
-############################
-figure(2);
-   hold off;
-   plot(loss(:,1),";training;")
 
-   hold on;
-   plot(loss(:,2),";validation;")
-
-   xlabel('Iteration')
-   ylabel('Error')
-   title('Error vs. Iteration')
-   hold on;
-
-############################
 
 function [confusionMatrix] = calculateConfusionMatrix(actualLabels, predictedLabels, numClasses)
 % Función que calcula la matriz de confusión para un conjunto de etiquetas de

@@ -158,7 +158,7 @@ classdef sequential < handle
 
       parser = inputParser();
 
-      validMethods={"batch","sgd","momentum","rmsprop","adam","autoclip"};
+      validMethods={"batch","sgd","momentum","rmsprop","adam","autoclip","radam"};
       checkMethod = @(x) any(validatestring(x,validMethods));
       addParameter(parser,'method',self.method,checkMethod);
 
