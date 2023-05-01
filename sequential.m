@@ -123,6 +123,15 @@ classdef sequential < handle
       newState = currentState - self.alpha*self.filteredGradients{layerIdx};
     endfunction
 
+    ## State update for rmsprop
+    function newState = updatermsprop(self, layerIdx, currentState, stateGradient)
+      if ((layerIdx > length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
+        self.filteredGradients{layerIdx} = stateGradient .^ 2;
+      else
+        self.filteredGradients{layerIdx} = self.beta2 * self.filteredGradients{layerIdx} + (1 - self.beta2) * (stateGradient .^ 2);
+      endif
+      newState = currentState - (self.alpha ./ (sqrt(self.filteredGradients{layerIdx}) + self.epsilon)) .* stateGradient;
+    endfunction
 
 
   endmethods
@@ -295,6 +304,9 @@ classdef sequential < handle
         case "sgd"
           sampler=samplerMB;
           updater=@(li,tc,g) self.updateSimple(li,tc,g);
+        case "rmsprop"
+          sampler=samplerMB;
+          updater=@(li,tc,g) self.updatermsprop(li,tc,g);
         otherwise
           error("Method not implemented yet");
       endswitch
