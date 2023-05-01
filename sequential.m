@@ -132,8 +132,19 @@ classdef sequential < handle
       endif
       newState = currentState - (self.alpha ./ (sqrt(self.filteredGradients{layerIdx}) + self.epsilon)) .* stateGradient;
     endfunction
-
-
+    ## State update for adam
+    function newState = updateADAM(self, layerIdx, currentState, stateGradient)
+      if ((layerIdx > length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
+        self.filteredGradients{layerIdx} = stateGradient;
+        self.secondMoments{layerIdx} = stateGradient .^ 2;
+      else
+        self.filteredGradients{layerIdx} = self.beta1 * self.filteredGradients{layerIdx} + (1 - self.beta1) * stateGradient;
+        self.secondMoments{layerIdx} = self.beta2 * self.secondMoments{layerIdx} + (1 - self.beta2) * (stateGradient .^ 2);
+      endif
+      mHat = self.filteredGradients{layerIdx} ./ (1 - self.beta1 ^ (self.t));
+      vHat = self.secondMoments{layerIdx} ./ (1 - self.beta2 ^ (self.t));
+      newState = currentState - (self.alpha ./ (sqrt(vHat) + self.epsilon)) .* mHat;
+    endfunction
   endmethods
 
   methods (Access = public)
@@ -305,6 +316,9 @@ classdef sequential < handle
           sampler=samplerMB;
           updater=@(li,tc,g) self.updateSimple(li,tc,g);
         case "rmsprop"
+          sampler=samplerMB;
+          updater=@(li,tc,g) self.updatermsprop(li,tc,g);
+        case "adam"
           sampler=samplerMB;
           updater=@(li,tc,g) self.updatermsprop(li,tc,g);
         otherwise

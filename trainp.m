@@ -38,7 +38,7 @@ figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
 ##############################################
-methods={"momentum","sgd","rmsprop","batch"};
+methods={"momentum","sgd","rmsprop","adam","batch"};
 
 for m=1:length(methods)
   methodx=methods{m};
