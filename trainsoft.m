@@ -34,16 +34,13 @@ Y = oY(idxTrain,:);
 
 vX = oX(idxTest,:);
 vY = oY(idxTest,:);
-figure(1,"name","Datos de entrenamiento");
-hold off;
-plot_data(X,Y);
 
-ann=sequential("maxiter",3000,
-               "alpha",0.1,
+ann=sequential("maxiter",1500,
+               "alpha",0.01,
                "beta2",0.99,
                "beta1",0.9,
                "minibatch",32,
-               "method","momentum",
+               "method","batch",
                "show","loss");
 
 file="ann.dat";
@@ -61,14 +58,6 @@ else
            dense(numClasses),
            sigmoid()});
 
-  #ann.add(input_layer(2));
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(numClasses));
-  #ann.add(sigmoid());
-
 
   ann.add(olsloss());
 endif
@@ -81,11 +70,7 @@ ann.save(file);
 
 ############################
 figure(2);
-   hold off;
-   plot(loss(:,1),";training;")
-
-   hold on;
-   plot(loss(:,2),";validation;")
+   plot(loss(:,1),";softmax;")
 
    xlabel('Iteration')
    ylabel('Error')
@@ -152,4 +137,4 @@ end
 evalresults(Y(1:200,:), vY, numClasses);
 
 
-softmaxvisualizer(X,Y)
+##softmaxvisualizer(X,Y)
