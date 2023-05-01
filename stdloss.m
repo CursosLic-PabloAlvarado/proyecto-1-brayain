@@ -12,7 +12,7 @@
 ##
 ## Esta capa calcula entonces la pérdida como la mitad de la suma de los
 ## cuadrados de las diferencias
-classdef olsloss < handle
+classdef stdloss < handle
   properties
     ## Entrada en la propagación hacia adelante
     diff=[];
@@ -24,7 +24,7 @@ classdef olsloss < handle
 
   methods
     ## Constructor solo incializa los datos
-    function self=olsloss()
+    function self=stdloss()
       self.diff=[];
       self.outputs=[];
       self.gradient=[];
@@ -56,20 +56,20 @@ classdef olsloss < handle
         error("Capas de pérdida deben ser las últimas del grafo");
       elseif (isreal(Y) && ismatrix(Y) && (size(Y)>=size(Ygt)))
         Y = Y(1:size(Ygt, 1), :);
-        n = numel(y_true);
+        n = numel(Ygt);
         self.outputs = sqrt(mean((Y - Ygt).^2));
         J=self.outputs;
         self.diff=(Y-Ygt)/(n*self.outputs);
         self.gradient = [];
       else
-        error("olsloss espera dos matrices reales del mismo tamaño");
+        error("stdloss espera dos matrices reales del mismo tamaño");
       endif
     endfunction
 
     ## Propagación hacia atrás recibe dJ/ds de siguientes nodos
     function g=backward(self,dJds)
       if (size(dJds)!=size(self.outputs))
-        error("backward de olsloss no compatible con forward previo");
+        error("backward de stdloss no compatible con forward previo");
       endif
       ## Asumiendo que dJds es escalar (la salida debería serlo)
       self.gradient = self.diff*dJds;

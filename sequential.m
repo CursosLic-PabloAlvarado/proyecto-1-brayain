@@ -27,11 +27,13 @@ classdef sequential < handle
     minibatch=128;
 
     alpha=0.01;     ## Learning rate
+    dalpha=0.005;   ## Decay
     beta1 = 0.95    ## Momentum: 0 para no usar momentum
     beta2 = 0.99    ## Polo de filtro de cuadrados (0: no usar Adam))
     epsilon = 1e-9; ## Evite divisiones por cero en Adam
 
     method = 'adam';  ## "batch", "sgd", "momentum", "rmsprop", "adam", "autoclip"
+    use_decay=false;
     mbmode = 'withrep';  ## Minibatch mode with replacement
     show   = 'progress';
     secondMoments;
@@ -48,6 +50,7 @@ classdef sequential < handle
   endproperties
 
   methods (Access = private)
+
 
     ## ----------------------------------------------------------------------
     ## Show progress methods
@@ -223,11 +226,12 @@ classdef sequential < handle
       validMethods={"batch","sgd","momentum","rmsprop","adam","autoclip","radam"};
       checkMethod = @(x) any(validatestring(x,validMethods));
       addParameter(parser,'method',self.method,checkMethod);
-
+      addParameter(parser,'use_decay',self.use_decay);
       checkBeta = @(x) isreal(x) && isscalar(x) && x>=0 && x<=1;
       checkRealPosScalar = @(x) isreal(x) && isscalar(x) && x>0;
 
       addParameter(parser,'alpha',self.alpha,checkBeta);
+      addParameter(parser,'dalpha',self.dalpha,checkBeta);
       addParameter(parser,'beta1',self.beta1,checkBeta);
       addParameter(parser,'beta2',self.beta2,checkBeta);
       addParameter(parser,'maxiter',self.maxiter,checkRealPosScalar);
@@ -246,9 +250,11 @@ classdef sequential < handle
 
       self.method    = parser.Results.method;    ## String with desired method
       self.alpha     = parser.Results.alpha;     ## Learning rate
+      self.dalpha     = parser.Results.dalpha;   ## Decay rate
       self.beta1     = parser.Results.beta1;     ## Momentum parameters beta1
       self.beta2     = parser.Results.beta2;     ## ADAM paramter beta2
       self.maxiter   = parser.Results.maxiter;   ## maxinum number of iterations
+      self.use_decay = parser.Results.use_decay;
       self.epsilon   = parser.Results.epsilon;   ## convergence error tolerance
       self.minibatch = parser.Results.minibatch; ## minibatch size
       self.mbmode    = parser.Results.mbmode;    ## minibatch replacement mode
@@ -387,7 +393,8 @@ classdef sequential < handle
 
         subX=X(idx,:);
         subY=Y(idx,:);
-
+        lr = learning_rate_decay(self.alpha, ep, self.dalpha, self.use_decay);
+        self.alpha=lr;
         ## Forward propagation
         y=self.layers{1}.forward(subX);
         for l=2:numLayers-1
@@ -509,8 +516,10 @@ classdef sequential < handle
       ## save no entiende atributos de una clase, así que necesitamos
       ## pasar los parámetros de la clase a una estructura
       param.maxiter=self.maxiter;
+      param.use_decay=self.use_decay;
       param.minibatch=self.minibatch;
       param.alpha=self.alpha;
+      param.dalpha=self.dalpha;
       param.beta1=self.beta1;
       param.beta2=self.beta2;
       param.epsilon=self.epsilon;

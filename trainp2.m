@@ -37,64 +37,78 @@ vY = oY(idxTest,:);
 figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
+##############################################
+methods={"OLS","ENTROPY","STD","MAE"};
 
-ann=sequential("maxiter",100,
-               "use_decay",true,
-               "dalpha",0.00005,
-               "alpha",0.05,
-               "beta2",0.99,
-               "beta1",0.9,
-               "minibatch",32,
-               "method","batch",
-               "show","loss");
-
-file="ann.dat";
-
-reuseNetwork = false;
-
-if (reuseNetwork && exist(file,"file")==2)
-  ann.load(file);
-else
-  ann.add({input_layer(2),
-           dense(16),
-           sigmoid(),
-           dense(16),
-           sigmoid(),
-           dense(numClasses),
-           sigmoid()});
-
-  #ann.add(input_layer(2));
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(numClasses));
-  #ann.add(sigmoid());
+for m=1:length(methods)
+  methodx=methods{m};
+  printf("Probando método '%s'.\n",methodx);
+  msg=sprintf(";%s;",methodx); ## use method in legends
 
 
-  ann.add(maeloss());
-endif
+################
+    ann=sequential("maxiter",1500,
+                   "use_decay",false,
+                   "dalpha",0.0005,
+                   "alpha",0.05,
+                   "beta2",0.99,
+                   "beta1",0.9,
+                   "minibatch",32,
+                   "method","batch",
+                   "show","loss");
 
-loss=ann.train(X,Y,vX,vY);
-ann.save(file);
+    file="ann.dat";
+
+    reuseNetwork = false;
+
+    if (reuseNetwork && exist(file,"file")==2)
+      ann.load(file);
+    else
+      ann.add({input_layer(2),
+               dense(16),
+               sigmoid(),
+               dense(16),
+               sigmoid(),
+               dense(numClasses),
+               sigmoid()});
+      if m==1
+        ann.add(olsloss())
+      elseif m==2
+        ann.add(xent())
+      elseif m==3
+        ann.add(stdloss())
+      elseif m==4
+        ann.add(maeloss())
+      endif
+
+    endif
+
+    loss=ann.train(X,Y,vX,vY);
+    ann.save(file);
+    ############################
+
+      y_result = loss(:,1); % Your Y result column vector
+      y_result_every_10th = y_result(1:10:end); % Extract every 10th element
+      figure(2);
+      plot(y_result_every_10th,msg,"linewidth",2)
+      title('Error vs. Iteration')
+      hold on;
+
+
+    ############################
+endfor
+xlabel("Iteration");
+ylabel("Loss");
+grid on;
+hold off;
+##################
+
+
 
 ## TODO: falta agregar el resto de pruebas Y visualizaciones
 
 
-############################
-figure(2);
-   hold off;
-   plot(loss(:,1),";training;")
 
-   hold on;
-   plot(loss(:,2),";validation;")
-
-   xlabel('Iteration')
-   ylabel('Error')
-   title('Error vs. Iteration')
-   hold on;
-
-############################
 
 function [confusionMatrix] = calculateConfusionMatrix(actualLabels, predictedLabels, numClasses)
 % Función que calcula la matriz de confusión para un conjunto de etiquetas de

@@ -12,7 +12,7 @@
 ##
 ## Esta capa calcula entonces la pérdida como la mitad de la suma de los
 ## cuadrados de las diferencias
-classdef olsloss < handle
+classdef xent < handle
   properties
     ## Entrada en la propagación hacia adelante
     diff=[];
@@ -24,7 +24,7 @@ classdef olsloss < handle
 
   methods
     ## Constructor solo incializa los datos
-    function self=olsloss()
+    function self=xent()
       self.diff=[];
       self.outputs=[];
       self.gradient=[];
@@ -61,14 +61,14 @@ classdef olsloss < handle
         J=self.outputs;
         self.gradient = [];
       else
-        error("olsloss espera dos matrices reales del mismo tamaño");
+        error("xent espera dos matrices reales del mismo tamaño");
       endif
     endfunction
 
     ## Propagación hacia atrás recibe dJ/ds de siguientes nodos
     function g=backward(self,dJds)
       if (size(dJds)!=size(self.outputs))
-        error("backward de olsloss no compatible con forward previo");
+        error("backward de xent no compatible con forward previo");
       endif
       ## Asumiendo que dJds es escalar (la salida debería serlo)
       self.gradient = self.diff*dJds;
