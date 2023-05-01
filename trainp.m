@@ -38,28 +38,12 @@ figure(1,"name","Datos de entrenamiento");
 hold off;
 plot_data(X,Y);
 ##############################################
-methods={"momentum","sgd","rmsprop","adam","batch"};
+methods={"momentum","sgd","rmsprop","adam","autoclip","radam","batch"};
 
 for m=1:length(methods)
   methodx=methods{m};
   printf("Probando método '%s'.\n",methodx);
   msg=sprintf(";%s;",methodx); ## use method in legends
-
-##  try
-##    opt.configure("method",method); ## Just change the method
-##    [ts,errs]=opt.minimize(@softmax_loss,@softmax_gradloss,theta0,NXtr,Y);
-##    theta=ts{end}
-##
-##    py=softmax_hyp(theta,NXte);
-##    err=sum((py>0.5)!=Yte);
-##    tot=100*(err/rows(Yte));
-##
-##    printf("errores de prueba: %d de %d (%.2f%%)\n", err, length(Yte), tot);
-##
-##    py=softmax_hyp(theta,NXtr);
-##    err=sum((py>0.5)!=Y);
-##    tot=100*(err/rows(Y));
-##    printf("errores de entreneamineto: %d de %d (%.2f%%)\n", err, length(Y), tot);
 
 
 ################
@@ -114,7 +98,7 @@ for m=1:length(methods)
        plot(loss(:,1),msg,"linewidth",2)
        title('Error vs. Iteration')
        hold on;
-
+    %clear classes;
     endif
 
     ############################

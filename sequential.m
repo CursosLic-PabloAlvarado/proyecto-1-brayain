@@ -34,8 +34,8 @@ classdef sequential < handle
     method = 'adam';  ## "batch", "sgd", "momentum", "rmsprop", "adam", "autoclip"
     mbmode = 'withrep';  ## Minibatch mode with replacement
     show   = 'progress';
-
-
+    secondMoments;
+    t;
     ## Remaining samples used while training with no-replacement
     remainingIndices=[];
 
@@ -132,8 +132,9 @@ classdef sequential < handle
       endif
       newState = currentState - (self.alpha ./ (sqrt(self.filteredGradients{layerIdx}) + self.epsilon)) .* stateGradient;
     endfunction
+
     ## State update for adam
-    function newState = updateADAM(self, layerIdx, currentState, stateGradient)
+    function newState = updateadam(self, layerIdx, currentState, stateGradient)
       if ((layerIdx > length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
         self.filteredGradients{layerIdx} = stateGradient;
         self.secondMoments{layerIdx} = stateGradient .^ 2;
@@ -144,7 +145,48 @@ classdef sequential < handle
       mHat = self.filteredGradients{layerIdx} ./ (1 - self.beta1 ^ (self.t));
       vHat = self.secondMoments{layerIdx} ./ (1 - self.beta2 ^ (self.t));
       newState = currentState - (self.alpha ./ (sqrt(vHat) + self.epsilon)) .* mHat;
+      self.t += 1;
     endfunction
+
+    ## State update for autoclip
+    function newState = updateautoclip(self, layerIdx, currentState, stateGradient)
+      if ((layerIdx > length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
+        self.filteredGradients{layerIdx} = stateGradient;
+        self.secondMoments{layerIdx} = stateGradient .^ 2;
+        clipValue = norm(stateGradient);
+      else
+        clipValue = max(norm(stateGradient), norm(self.filteredGradients{layerIdx}));
+        self.filteredGradients{layerIdx} = stateGradient;
+        self.secondMoments{layerIdx} = stateGradient .^ 2;
+      endif
+      clippedStateGradient = min(clipValue, norm(stateGradient)) * stateGradient / norm(stateGradient);
+      newState = currentState - self.alpha * clippedStateGradient;
+    endfunction
+
+    ## State update for radam
+    function newState = updateradam(self, layerIdx, currentState, stateGradient)
+      if ((layerIdx > length(self.filteredGradients)) || isempty(self.filteredGradients{layerIdx}))
+        self.filteredGradients{layerIdx} = stateGradient;
+        self.secondMoments{layerIdx} = stateGradient .^ 2;
+      else
+        self.filteredGradients{layerIdx} = self.beta1 * self.filteredGradients{layerIdx} + (1 - self.beta1) * stateGradient;
+        self.secondMoments{layerIdx} = self.beta2 * self.secondMoments{layerIdx} + (1 - self.beta2) * (stateGradient .^ 2);
+      endif
+      mHat = self.filteredGradients{layerIdx} ./ (1 - self.beta1 ^ (self.t));
+      vHat = self.secondMoments{layerIdx} ./ (1 - self.beta2 ^ (self.t));
+
+      pInf = 2 / (1 - self.beta2) - 1;
+      pt = pInf - 2 * self.t * (self.beta2 ^ self.t) / (1 - self.beta2 ^ self.t);
+
+      if pt > 4
+        r = sqrt(((pt - 4) * (pt - 2) * pInf) / ((pInf - 4) * (pInf - 2) * pt));
+        newState = currentState - (self.alpha * r ./ (sqrt(vHat) + self.epsilon)) .* mHat;
+      else
+        newState = currentState - self.alpha * mHat;
+      endif
+      self.t += 1;
+    endfunction
+
   endmethods
 
   methods (Access = public)
@@ -211,7 +253,8 @@ classdef sequential < handle
       self.minibatch = parser.Results.minibatch; ## minibatch size
       self.mbmode    = parser.Results.mbmode;    ## minibatch replacement mode
       self.show      = parser.Results.show;      ## show progress information
-
+      self.secondMoments      = {};
+      self.t = 1;
     endfunction
 
 
@@ -320,7 +363,13 @@ classdef sequential < handle
           updater=@(li,tc,g) self.updatermsprop(li,tc,g);
         case "adam"
           sampler=samplerMB;
-          updater=@(li,tc,g) self.updatermsprop(li,tc,g);
+          updater=@(li,tc,g) self.updateadam(li,tc,g);
+        case "autoclip"
+          sampler=samplerMB;
+          updater=@(li,tc,g) self.updateautoclip(li,tc,g);
+        case "radam"
+          sampler=samplerMB;
+          updater=@(li,tc,g) self.updateradam(li,tc,g);
         otherwise
           error("Method not implemented yet");
       endswitch
