@@ -12,34 +12,40 @@ clear classes;
 warning('off','Octave:shadowed-function');
 pkg load statistics;
 
-numClasses=5;
+numClasses=3;
 
 ##datashape='spirals';
 ##datashape='curved';
 ##datashape='voronoi';
 ##datashape='vertical';
-datashape='pie';
+##datashape='pie';
+##
+##[oX,oY]=create_data(numClasses*100,numClasses,datashape); ## Training
+##
+#### Partition created data into training (60%) and test (40%) sets
+##idx=randperm(rows(oX));
+##
+##tap=round(0.6*rows(oX));
+##idxTrain=idx(1:tap);
+##idxTest=idx(tap+1:end);
+##
+##X = oX(idxTrain,:);
+##Y = oY(idxTrain,:);
+##
+##vX = oX(idxTest,:);
+##vY = oY(idxTest,:);
 
-[oX,oY]=create_data(numClasses*100,numClasses,datashape); ## Training
+[X,Y,vX,vY,names] = loadpenguindata("species");
 
-## Partition created data into training (60%) and test (40%) sets
-idx=randperm(rows(oX));
+X = X(:,2:3);
+##Y = Y(:,2:3);
 
-tap=round(0.6*rows(oX));
-idxTrain=idx(1:tap);
-idxTest=idx(tap+1:end);
+vX = vX(:,2:3);
+##vY = vY(:,2:3);
 
-X = oX(idxTrain,:);
-Y = oY(idxTrain,:);
-
-vX = oX(idxTest,:);
-vY = oY(idxTest,:);
-figure(1,"name","Datos de entrenamiento");
-hold off;
-plot_data(X,Y);
 
 ann=sequential("maxiter",1500,
-               "use_decay",true,
+               "use_decay",false,
                "dalpha",0.00005,
                "alpha",0.05,
                "beta2",0.99,
@@ -57,22 +63,14 @@ if (reuseNetwork && exist(file,"file")==2)
 else
   ann.add({input_layer(2),
            dense(16),
-           sigmoid(),
+           prelu(),
            dense(16),
-           sigmoid(),
+           prelu(),
            dense(numClasses),
            sigmoid()});
 
-  #ann.add(input_layer(2));
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(16));
-  #ann.add(sigmoid());
-  #ann.add(dense(numClasses));
-  #ann.add(sigmoid());
 
-
-  ann.add(maeloss());
+  ann.add(olsloss());
 endif
 
 loss=ann.train(X,Y,vX,vY);
@@ -83,11 +81,7 @@ ann.save(file);
 
 ############################
 figure(2);
-   hold off;
-   plot(loss(:,1),";training;")
-
-   hold on;
-   plot(loss(:,2),";validation;")
+   plot(loss(:,1),";Prueba 2 con prelu;")
 
    xlabel('Iteration')
    ylabel('Error')
@@ -142,7 +136,7 @@ end
 fprintf('Resultados de clasificacion de la matriz de confusion \v');
 
 fprintf('Clase \t Precision \t Exhaustividad \t Exactitud\n');
-for i = 1:5
+for i = 1:numClasses
     fprintf('%d \t %f \t %f \t %f\n', i, precision(i), recall(i), accuracy);
 end
 
@@ -151,7 +145,7 @@ end
 end
 
 %Llamar a la función
-evalresults(Y(1:200,:), vY, numClasses);
+evalresults(Y(1:rows(vY),:), vY, numClasses);
 
 
-softmaxvisualizer(X,Y)
+##softmaxvisualizerpen(X,Y)

@@ -1,4 +1,4 @@
-function softmaxvisualizer(X,Y)
+function softmaxvisualizerpen(X,Y)
   ## Initial configuration for the optimizer
   opt=optimizer("method","sgd",
                 "minibatch",11,
@@ -8,7 +8,7 @@ function softmaxvisualizer(X,Y)
   Xtr = [ones(length(X),1) X];
   NX=normalizer("normal");
   NXtr=NX.fit_transform(Xtr);
-  theta0=rand(columns(NXtr),4)-0.5;%OJO como Y son 5 clases, theta tiene que acoplarse a este tama�o
+  theta0=rand(columns(NXtr),2)-0.5;%OJO como Y son 5 clases, theta tiene que acoplarse a este tama�o
   comp=100;
   columna1=0;
   columna2=0;
@@ -58,28 +58,20 @@ comp
     c1=ytest2(i,1);
     c2=ytest2(i,2);
     c3=ytest2(i,3);
-    c4=ytest2(i,4);
-    c5=ytest2(i,5);
 
-    if c1>c2 && c1>c3 && c1>c4 && c1>c5
+    if c1>c2 && c1>c3
       ygrap(i)=1;
     endif
-    if c2>c1 && c2>c3 && c2>c4 && c2>c5
+    if c2>c1 && c2>c3
       ygrap(i)=2;
     endif
-    if c3>c2 && c3>c1 && c3>c4 && c3>c5
+    if c3>c2 && c3>c1
       ygrap(i)=3;
-    endif
-    if c4>c2 && c4>c3 && c4>c1 && c4>c5
-      ygrap(i)=4;
-    endif
-    if c5>c2 && c5>c3 && c5>c4 && c5>c1
-      ygrap(i)=5;
     endif
   endfor
 
 
-  cmap = [0.1,0.4,0.6; 0.5,0,0.5 ;0,0,1;0,1,0;1,0,0];
+  cmap = [1,0,0; 0,1,0; 0,0,1];
   img = reshape(ygrap,size(ee11));
   rgb_img = ind2rgb(img, cmap);
   figure(5,"name","Regiones de las clases ganadoras para el espacio de entrada bidimensional");
